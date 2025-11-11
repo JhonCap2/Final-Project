@@ -1,0 +1,29 @@
+{
+  "name": "allergysafety-fullstack",
+  "version": "1.0.0",
+  "description": "AllergySafety - Full Stack Application",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd AllergySafety-Server && npm run dev",
+    "dev:client": "cd AllergySafety-Client && npm run dev",
+    "install:all": "npm install && cd AllergySafety-Server && npm install && cd ../AllergySafety-Client && npm install",
+    "build": "concurrently \"npm run build:server\" \"npm run build:client\"",
+    "build:server": "cd AllergySafety-Server && npm run build",
+    "build:client": "cd AllergySafety-Client && npm run build",
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "start:server": "cd AllergySafety-Server && npm start",
+    "start:client": "cd AllergySafety-Client && npm run preview"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "allergy",
+    "safety",
+    "health",
+    "fullstack"
+  ],
+  "author": "Jhon Capellan",
+  "license": "ISC"
+}
