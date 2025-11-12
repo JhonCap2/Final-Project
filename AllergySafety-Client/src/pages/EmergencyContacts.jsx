@@ -15,12 +15,14 @@ export default function EmergencyContacts({ userData, setUserData }) {
         ...prev,
         emergencyContacts: [...(prev.emergencyContacts || []), newContact]
       }))
-      setNewContact({
-        name: '',
-        phone: '',
-        relationship: '',
-        isPrimary: false
-      })
+      const [newContact, setNewContact] = useState({
+  name: '',
+  phone: '',
+  relationship: '',
+  bloodType: '', // nuevo
+  isPrimary: false
+})
+
     }
   }
 
@@ -96,6 +98,25 @@ export default function EmergencyContacts({ userData, setUserData }) {
                   </select>
                 </div>
               </div>
+              <div>
+  <label className="block text-gray-700 font-semibold mb-2">Blood Type</label>
+  <select
+    value={newContact.bloodType}
+    onChange={(e) => setNewContact(prev => ({ ...prev, bloodType: e.target.value }))}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+  >
+    <option value="">Select Blood Type</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+  </select>
+</div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

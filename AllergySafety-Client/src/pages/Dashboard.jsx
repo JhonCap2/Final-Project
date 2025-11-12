@@ -55,7 +55,7 @@ export default function Dashboard() {
     }
   })
 
-  const [newContact, setNewContact] = useState({ name: "", phone: "", relationship: "" })
+  const [newContact, setNewContact] = useState({ name: "", phone: "", relationship: "", email: "", bloodType: "" })
   const [newAllergy, setNewAllergy] = useState({ name: "", severity: "Moderate" })
   const [newMedication, setNewMedication] = useState({ name: "", usage: "" })
   const [newCondition, setNewCondition] = useState("")
@@ -83,18 +83,18 @@ export default function Dashboard() {
           .then(res => {
             const contact = res.data.contact
             setEmergencyContacts(prev => [contact, ...prev])
-            setNewContact({ name: "", phone: "", relationship: "" })
+            setNewContact({ name: "", phone: "", relationship: "", email: "", bloodType: "" })
             toast.success('Emergency contact saved to server')
           }).catch(err => {
             console.error('Create contact failed', err)
             // fallback to local
             setEmergencyContacts(prev => [...prev, { id: Date.now(), ...newContact }])
-            setNewContact({ name: "", phone: "", relationship: "" })
+            setNewContact({ name: "", phone: "", relationship: "", email: "", bloodType: "" })
             toast.error('Failed to save contact to server, saved locally')
           })
       } else {
         setEmergencyContacts([...emergencyContacts, { id: Date.now(), ...newContact }])
-        setNewContact({ name: "", phone: "", relationship: "" })
+        setNewContact({ name: "", phone: "", relationship: "", email: "", bloodType: "" })
         toast.info('Added contact locally. Log in to persist')
       }
     }
@@ -189,6 +189,25 @@ export default function Dashboard() {
 
   const handleDeleteCondition = (condition) => {
     setUserData({ ...userData, medicalConditions: userData.medicalConditions.filter(c => c !== condition) })
+  }
+
+  // Blood type donation compatibility chart
+  // Returns true if donor blood type can donate to recipient blood type
+  const isCompatibleDonor = (donorType, recipientType) => {
+    if (!donorType || !recipientType) return false
+    
+    const compatibility = {
+      'O+': ['O+', 'A+', 'B+', 'AB+'],
+      'O-': ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'], // Universal donor
+      'A+': ['A+', 'AB+'],
+      'A-': ['A+', 'A-', 'AB+', 'AB-'],
+      'B+': ['B+', 'AB+'],
+      'B-': ['B+', 'B-', 'AB+', 'AB-'],
+      'AB+': ['AB+'],
+      'AB-': ['AB+', 'AB-']
+    }
+    
+    return compatibility[donorType]?.includes(recipientType) || false
   }
 
   return (
@@ -354,20 +373,113 @@ export default function Dashboard() {
               <h2 className="text-3xl font-bold">Emergency Contacts</h2>
               <button onClick={() => setShowEmergencyContacts(false)}><FaTimes className="text-2xl" /></button>
             </div>
-            <h3 className="text-lg font-bold mb-2">Your Contacts</h3>
-            {emergencyContacts.map(c => (
-              <div key={c.id} className="bg-gray-50 p-4 rounded mb-2 flex justify-between">
-                <div>
-                  <p className="font-bold">{c.name}</p>
-                  <p className="text-sm">{c.relationship}</p>
-                  <p className="text-sm">{c.phone}</p>
-                </div>
-                <button onClick={() => handleDeleteContact(c.id)}><FaTrash className="text-red-600" /></button>
+
+            {/* Your Blood Type Info with Compatibility */}
+{userData.bloodType && (
+  <div className="bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-300 rounded-lg p-4 mb-6">
+    <p className="text-sm text-gray-600 font-semibold">Your Blood Type</p>
+    <p className="text-3xl font-bold text-red-700">{userData.bloodType}</p>
+    <p className="text-xs text-gray-600 mt-2">Below shows which contacts can donate to you</p>
+
+    {emergencyContacts.length > 0 ? (
+      <div className="mt-4 space-y-3">
+        {emergencyContacts.map(c => {
+          const canDonate = c.bloodType && isCompatibleDonor(c.bloodType, userData.bloodType)
+          return (
+            <div key={c._id || c.id} className="p-3 rounded flex justify-between items-center bg-gray-50 border-l-4 border-gray-400">
+              <div className="flex-1">
+                <p className="font-bold text-lg">{c.name}</p>
+                <p className="text-sm text-gray-600">{c.bloodType ? `Blood: ${c.bloodType}` : "Blood type unknown"}</p>
               </div>
-            ))}
-            <h3 className="text-lg font-bold mb-2 mt-4">Add Contact</h3>
-            <input type="text" placeholder="Name" value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-2" />
-            <input type="tel" placeholder="Phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-2" />
+              <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                canDonate ? 'bg-green-500 text-white' : 'bg-red-400 text-white'
+              }`}>
+                {c.bloodType ? (canDonate ? 'Compatible' : 'Not Compatible') : 'Unknown'}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <p className="text-gray-500 mt-3">No emergency contacts added yet.</p>
+    )}
+  </div>
+)}
+
+
+            <h3 className="text-lg font-bold mb-4">Your Contacts</h3>
+            {emergencyContacts.length > 0 ? (
+              emergencyContacts.map(c => {
+  const canDonate = userData.bloodType && c.bloodType && isCompatibleDonor(c.bloodType, userData.bloodType);
+  return (
+    <div 
+      key={c._id || c.id || c.phone + c.name} // fallback único
+      className={`p-4 rounded mb-4 flex justify-between items-start border-l-4 ${
+        canDonate 
+          ? 'bg-green-50 border-l-green-600' 
+          : userData.bloodType && c.bloodType
+          ? 'bg-gray-50 border-l-gray-400'
+          : 'bg-blue-50 border-l-blue-400'
+      }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-bold text-lg">{c.name}</p>
+                      <p className="text-sm text-gray-600">{c.relationship}</p>
+                      <p className="text-sm text-gray-600">{c.phone}</p>
+                      {c.email && <p className="text-sm text-gray-600">{c.email}</p>}
+                      
+                      {/* Blood Type Donor Badge */}
+                      {c.bloodType && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <span className="inline-block bg-orange-200 text-orange-800 px-3 py-1 rounded text-sm font-semibold">
+                            Blood: {c.bloodType}
+                          </span>
+                          {userData.bloodType && (
+                            <span className={`inline-block px-3 py-1 rounded text-xs font-bold ${
+                              canDonate
+                                ? 'bg-green-500 text-white'
+                                : 'bg-red-400 text-white'
+                            }`}>
+                              {canDonate ? '✓ Can Donate' : '✗ Not Compatible'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteContact(c._id || c.id)} 
+                      className="text-red-600 hover:text-red-800 ml-4 flex-shrink-0"
+                    >
+                      <FaTrash className="text-lg" />
+                    </button>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="text-gray-500 mb-4 bg-yellow-50 p-3 rounded">No emergency contacts added yet. Add at least one contact!</p>
+            )}
+
+            <h3 className="text-lg font-bold mb-4 mt-6 pt-6 border-t">Add Contact</h3>
+            <input type="text" placeholder="Name" value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-3" />
+            <input type="tel" placeholder="Phone" value={newContact.phone} onChange={(e) => setNewContact({...newContact, phone: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-3" />
+            <input type="email" placeholder="Email (optional)" value={newContact.email || ''} onChange={(e) => setNewContact({...newContact, email: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-3" />
+            
+            {/* Blood Type selector for new contact */}
+            <div className="mb-3">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Blood Type (optional - helps identify compatible donors)</label>
+              <select value={newContact.bloodType || ''} onChange={(e) => setNewContact({...newContact, bloodType: e.target.value})} className="w-full px-4 py-2 border-2 rounded">
+                <option value="">Don't know / Prefer not to say</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+
             <select value={newContact.relationship} onChange={(e) => setNewContact({...newContact, relationship: e.target.value})} className="w-full px-4 py-2 border-2 rounded mb-4">
               <option value="">Select Relationship</option>
               <option value="Parent">Parent</option>

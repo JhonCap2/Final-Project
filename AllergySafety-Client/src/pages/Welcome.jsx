@@ -78,12 +78,12 @@ export default function Welcome({ isLoggedIn, onLogin }) {
                     </div>
 
                     {/* Content */}
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-4">
+                    <div className="text-center mt-8 mb-8">
+                      <div className="flex items-center justify-center mb-6">
                         <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
                         <h2 className="text-3xl font-bold text-gray-800">{slide.title}</h2>
                       </div>
-                      <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                      <p className="text-gray-600 text-lg mb-12 leading-relaxed">
                         {slide.description}
                       </p>
                       {currentSlide === slides.length - 1 ? (

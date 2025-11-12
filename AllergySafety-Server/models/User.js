@@ -78,6 +78,16 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     }
+    ,
+    // Password reset token and expiry for "forgot password" flow
+    resetPasswordToken: {
+      type: String,
+      default: null
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null
+    }
   },
   { timestamps: true }
 );

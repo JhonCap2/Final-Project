@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { FaUser, FaCamera, FaPhone, FaDroplet, FaPill, FaHeartbeat, FaPhone as FaPhoneAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa'
+import { FaUser, FaCamera, FaPhone, FaTint, FaEdit, FaTimes, FaSave, FaHeartbeat, FaPills } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 
 export default function Profile() {
@@ -71,11 +71,27 @@ export default function Profile() {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validar tamaño (máx 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen debe ser menor a 5MB')
+        return
+      }
+
       const reader = new FileReader()
       reader.onloadend = () => {
         setProfilePic(reader.result)
-        // In production, upload to server
-        // axios.put('/api/users/profile', { profilePicture: reader.result })
+        
+        // Guardar la imagen en el servidor inmediatamente
+        axios.put('http://localhost:3001/api/users/profile', 
+          { profilePicture: reader.result },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).then(res => {
+          setUser(res.data.user)
+          toast.success('Foto de perfil actualizada!')
+        }).catch(err => {
+          console.error('Error al guardar la foto:', err)
+          toast.error('No se pudo guardar la foto: ' + (err.response?.data?.message || err.message))
+        })
       }
       reader.readAsDataURL(file)
     }
@@ -202,7 +218,7 @@ export default function Profile() {
             {/* Blood Type */}
             <div className="bg-red-50 rounded-lg p-4">
               <label className="text-gray-600 text-sm font-semibold mb-2 flex items-center gap-1">
-                <FaDroplet /> Blood Type
+                <FaTint /> Blood Type
               </label>
               {editing ? (
                 <select
@@ -261,7 +277,7 @@ export default function Profile() {
         {/* Medications Section */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <FaPill className="text-blue-600" /> Medications
+            <FaPills className="text-blue-600" /> Medications
           </h2>
 
           {formData.medications.length > 0 ? (

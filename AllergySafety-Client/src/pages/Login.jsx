@@ -10,6 +10,18 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  
+  // Forgot password states
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotStep, setForgotStep] = useState(1) // 1: request token, 2: reset password
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [resetToken, setResetToken] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [forgotError, setForgotError] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
 
   const handleGoogleSuccess = (credentialResponse) => {
     // credentialResponse.credential is the JWT token from Google
@@ -116,6 +128,91 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
     }
   }
 
+  // Handle forgot password: request reset token via email
+  const handleForgotPasswordRequest = async (e) => {
+    e.preventDefault()
+    setForgotError('')
+    setForgotLoading(true)
+
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setForgotError('Please enter a valid email address')
+      setForgotLoading(false)
+      return
+    }
+
+    try {
+      const res = await axios.post(
+        'http://localhost:3001/api/auth/forgot-password',
+        { email: forgotEmail }
+      )
+      
+      // In development, the API returns the token directly (for testing)
+      if (res.data.resetToken) {
+        setResetToken(res.data.resetToken)
+        toast.success('✓ Reset token generated! (See form)')
+      }
+      
+      setForgotStep(2)
+      setForgotLoading(false)
+    } catch (err) {
+      setForgotLoading(false)
+      const msg = err?.response?.data?.message || 'Failed to request password reset'
+      setForgotError(msg)
+      toast.error(msg)
+    }
+  }
+
+  // Handle forgot password: reset with token
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setForgotError('')
+    setForgotLoading(true)
+
+    if (!resetToken || !newPassword || !confirmPassword) {
+      setForgotError('Please fill in all fields')
+      setForgotLoading(false)
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setForgotError('Passwords do not match')
+      setForgotLoading(false)
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setForgotError('Password must be at least 6 characters')
+      setForgotLoading(false)
+      return
+    }
+
+    try {
+      const res = await axios.post(
+        'http://localhost:3001/api/auth/reset-password',
+        { token: resetToken, newPassword, confirmPassword }
+      )
+
+      const { token } = res.data
+      if (token) localStorage.setItem('token', token)
+
+      setForgotLoading(false)
+      toast.success('✓ Password reset successfully! You are now logged in.')
+      // Reset forgot password state
+      setShowForgotPassword(false)
+      setForgotStep(1)
+      setForgotEmail('')
+      setResetToken('')
+      setNewPassword('')
+      setConfirmPassword('')
+      onLoginSuccess()
+    } catch (err) {
+      setForgotLoading(false)
+      const msg = err?.response?.data?.message || 'Failed to reset password'
+      setForgotError(msg)
+      toast.error(msg)
+    }
+  }
+
   return (
     <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
@@ -187,9 +284,17 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
                   />
                   <span className="ml-2 text-gray-600">Remember me</span>
                 </label>
-                <a href="#" className="text-green-600 hover:text-green-700 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(true)
+                    setForgotStep(1)
+                    setForgotError('')
+                  }}
+                  className="text-green-600 hover:text-green-700 font-semibold"
+                >
                   Forgot Password?
-                </a>
+                </button>
               </div>
 
               {/* Submit Button */}
@@ -264,6 +369,161 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
             </p>
           </div>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                {forgotStep === 1 ? 'Reset Password' : 'Enter New Password'}
+              </h2>
+
+              {forgotStep === 1 ? (
+                // Step 1: Request reset token
+                <form onSubmit={handleForgotPasswordRequest} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {forgotError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                      <p className="text-red-700 text-sm font-medium">{forgotError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition"
+                    >
+                      {forgotLoading ? 'Sending...' : 'Send Reset Token'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(false)
+                        setForgotStep(1)
+                        setForgotError('')
+                        setForgotEmail('')
+                      }}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-lg transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-gray-600 text-center mt-4">
+                    We'll send you a reset token. Check your browser console or form below for the token.
+                  </p>
+                </form>
+              ) : (
+                // Step 2: Reset password with token
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Reset Token
+                    </label>
+                    <input
+                      type="text"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                      placeholder="Paste token from Step 1"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition text-sm font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {forgotError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                      <p className="text-red-700 text-sm font-medium">{forgotError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition"
+                    >
+                      {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotStep(1)
+                        setForgotError('')
+                        setResetToken('')
+                        setNewPassword('')
+                        setConfirmPassword('')
+                      }}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-lg transition"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </GoogleOAuthProvider>
   )
