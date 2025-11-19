@@ -71,7 +71,7 @@ export default function Profile() {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Validar tamaño (máx 5MB)
+      
       if (file.size > 5 * 1024 * 1024) {
         toast.error('La imagen debe ser menor a 5MB')
         return
@@ -80,8 +80,7 @@ export default function Profile() {
       const reader = new FileReader()
       reader.onloadend = () => {
         setProfilePic(reader.result)
-        
-        // Guardar la imagen en el servidor inmediatamente
+  
         axios.put('http://localhost:3001/api/users/profile', 
           { profilePicture: reader.result },
           { headers: { Authorization: `Bearer ${token}` } }

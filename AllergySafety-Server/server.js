@@ -19,35 +19,31 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
-// Increase JSON/urlencoded body size limits so profile pictures sent as base64 can be accepted in dev
 app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true, limit: '12mb' }));
-// Configure CORS to accept multiple local dev origins or an env var
+
+// Configure CORS
 const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174';
 const allowedOrigins = rawOrigins.split(',').map(s => s.trim());
 
 app.use(cors({
   origin: (origin, callback) => {
-    // In development, allow any origin to simplify local testing
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
-
-    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       return callback(null, true);
     }
-    // Do not throw — return false so CORS middleware simply won't set CORS headers for disallowed origins
     return callback(null, false);
   },
   credentials: true
 }));
 
-// Request logger (for debugging API calls)
+// Request logger
 app.use(requestLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);        // <- nota: "users" plural
 app.use('/api/allergies', allergyRoutes);
 app.use('/api/contacts', contactRoutes);
 

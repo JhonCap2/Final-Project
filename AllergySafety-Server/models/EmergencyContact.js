@@ -36,6 +36,11 @@ const emergencyContactSchema = new mongoose.Schema(
       enum: ['phone', 'email', 'sms'],
       default: ['phone']
     },
+    bloodType: {
+      type: String,
+      enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+      default: null
+    },
     address: {
       type: String,
       default: null
@@ -43,17 +48,9 @@ const emergencyContactSchema = new mongoose.Schema(
     notes: {
       type: String,
       default: null
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
     }
   },
-  { timestamps: true }
+  { timestamps: true } 
 );
 
 const EmergencyContact = mongoose.model('EmergencyContact', emergencyContactSchema);
