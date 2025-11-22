@@ -1,12 +1,24 @@
+import { useRef } from 'react'
 import { FaShieldAlt, FaPhone, FaHeartbeat, FaMap, FaBell, FaLock, FaCheckCircle, FaStar, FaArrowRight } from 'react-icons/fa'
+import { Link, useNavigate } from 'react-router-dom'
+import Welcome from './Welcome' // Importamos los slides
 
 export default function Home() {
   const token = localStorage.getItem('token')
+  const mainContentRef = useRef(null) // Ref para la sección principal
+
+  const handleScrollToContent = () => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-green-900 to-slate-900">
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 py-24 relative">
+      <main className="pt-16">
+        <Welcome onWelcomeComplete={handleScrollToContent} />
+      <section ref={mainContentRef} className="max-w-7xl mx-auto px-4 py-24 relative scroll-mt-16">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
@@ -30,15 +42,16 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <button
+            <Link
+              to={token ? "/dashboard" : "/login"}
               className="group bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white px-10 py-4 rounded-lg font-bold text-lg transition transform hover:scale-105 flex items-center justify-center gap-2"
             >
               {token ? 'Go to Dashboard' : 'Get Started'}
               <FaArrowRight className="group-hover:translate-x-1 transition" />
-            </button>
-            <button className="bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-lg font-bold text-lg transition backdrop-blur-sm border border-white/20">
+            </Link>
+            <a href="#why-choose" className="bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-lg font-bold text-lg transition backdrop-blur-sm border border-white/20 flex items-center justify-center">
               Learn More
-            </button>
+            </a>
           </div>
         </div>
 
@@ -106,7 +119,7 @@ export default function Home() {
         </div>
 
         {/* Why Choose Section */}
-        <section className="bg-gradient-to-r from-green-500/30 via-cyan-500/30 to-green-500/30 rounded-2xl shadow-2xl p-12 text-white mb-20 backdrop-blur-sm border border-green-400/30 relative z-10">
+        <section id="why-choose" className="bg-gradient-to-r from-green-500/30 via-cyan-500/30 to-green-500/30 rounded-2xl shadow-2xl p-12 text-white mb-20 backdrop-blur-sm border border-green-400/30 relative z-10 scroll-mt-24">
           <h2 className="text-4xl font-bold mb-12 text-center">Why Choose AllergySafety?</h2>
           <div className="grid md:grid-cols-2 gap-12">
             <div>
@@ -167,15 +180,16 @@ export default function Home() {
           <h2 className="text-4xl font-bold text-white mb-4">Ready to Stay Safe?</h2>
           <p className="text-xl text-gray-300 mb-10">Sign in to your account and start managing your health information today.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <button
+            <Link
+              to={token ? "/dashboard" : "/login"}
               className="group bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white px-10 py-4 rounded-lg font-bold text-lg transition transform hover:scale-105 flex items-center justify-center gap-2"
             >
               {token ? 'Go to Dashboard' : 'Get Started'}
               <FaArrowRight className="group-hover:translate-x-1 transition" />
-            </button>
-            <button className="bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-lg font-bold text-lg transition backdrop-blur-sm border border-white/20">
+            </Link>
+            <a href="#why-choose" className="bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-lg font-bold text-lg transition backdrop-blur-sm border border-white/20 flex items-center justify-center">
               Learn More
-            </button>
+            </a>
           </div>
         </section>
 
@@ -206,6 +220,7 @@ export default function Home() {
           </div>
         </section>
       </section>
+      </main>
     </div>
   )
 }

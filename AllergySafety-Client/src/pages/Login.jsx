@@ -2,9 +2,10 @@ import { useState } from 'react'
 import axios from 'axios'
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle, FaFacebook } from 'react-icons/fa'
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
+import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
-export default function Login({ onLoginSuccess, onSwitchToRegister }) {
+export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -352,13 +353,10 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
           {/* Sign Up Link */}
           <div className="text-center">
             <p className="text-gray-700">
-              Don't have an account?{' '}
-              <button
-                onClick={onSwitchToRegister}
-                className="text-green-600 hover:text-green-700 font-bold cursor-pointer"
-              >
+              Don't have an account?
+              <Link to="/register" className="text-green-600 hover:text-green-700 font-bold cursor-pointer ml-1">
                 Sign Up
-              </button>
+              </Link>
             </p>
           </div>
 

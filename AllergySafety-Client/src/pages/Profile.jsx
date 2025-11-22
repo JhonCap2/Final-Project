@@ -119,19 +119,19 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-8">
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-2">
               <FaUser /> My Profile
             </h1>
             <button
               onClick={() => setEditing(!editing)}
-              className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold transition ${
+              className={`flex items-center gap-2 px-6 py-2 rounded-lg font-semibold transition ${
                 editing
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
               }`}
             >
               {editing ? (
@@ -147,9 +147,9 @@ export default function Profile() {
           </div>
 
           {/* Profile Picture Section */}
-          <div className="flex items-end gap-6 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-6 mb-8">
             <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-green-400 flex items-center justify-center text-white text-6xl overflow-hidden border-4 border-blue-200">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-green-100 to-gray-200 flex items-center justify-center text-gray-500 text-6xl overflow-hidden border-4 border-white shadow-md">
                 {profilePic ? (
                   <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -157,7 +157,7 @@ export default function Profile() {
                 )}
               </div>
               {editing && (
-                <label className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer transition">
+                <label className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white p-2 rounded-full cursor-pointer transition shadow-md">
                   <FaCamera />
                   <input
                     type="file"
@@ -177,7 +177,7 @@ export default function Profile() {
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
               ) : (
@@ -190,15 +190,15 @@ export default function Profile() {
           </div>
 
           {/* Contact Information */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Email */}
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p className="text-gray-600 text-sm font-semibold mb-1">Email</p>
               <p className="text-gray-800 font-bold">{user.email}</p>
             </div>
 
             {/* Phone */}
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <label className="text-gray-600 text-sm font-semibold mb-2 flex items-center gap-1">
                 <FaPhone /> Phone
               </label>
@@ -207,7 +207,7 @@ export default function Profile() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-1 border-2 border-green-300 rounded focus:outline-none focus:border-green-600"
+                  className="w-full px-3 py-1 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               ) : (
                 <p className="text-gray-800 font-bold">{formData.phone || 'Not set'}</p>
@@ -215,7 +215,7 @@ export default function Profile() {
             </div>
 
             {/* Blood Type */}
-            <div className="bg-red-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <label className="text-gray-600 text-sm font-semibold mb-2 flex items-center gap-1">
                 <FaTint /> Blood Type
               </label>
@@ -223,7 +223,7 @@ export default function Profile() {
                 <select
                   value={formData.bloodType}
                   onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
-                  className="w-full px-3 py-1 border-2 border-red-300 rounded focus:outline-none focus:border-red-600"
+                  className="w-full px-3 py-1 border-2 border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select</option>
                   <option value="O+">O+</option>
@@ -257,13 +257,13 @@ export default function Profile() {
         {/* Medical Conditions Section */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <FaHeartbeat className="text-red-600" /> Medical Conditions
+            <FaHeartbeat className="text-red-500" /> Medical Conditions
           </h2>
 
           {formData.medicalConditions.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {formData.medicalConditions.map((condition, idx) => (
-                <div key={idx} className="bg-red-50 rounded-lg p-4 border-l-4 border-red-600">
+                <div key={idx} className="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
                   <p className="text-gray-800 font-semibold">{condition}</p>
                 </div>
               ))}
@@ -276,14 +276,14 @@ export default function Profile() {
         {/* Medications Section */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <FaPills className="text-blue-600" /> Medications
+            <FaPills className="text-green-600" /> Medications
           </h2>
 
           {formData.medications.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-blue-100 text-left">
+                  <tr className="bg-green-50 text-left">
                     <th className="px-4 py-2 font-bold text-gray-800">Medication</th>
                     <th className="px-4 py-2 font-bold text-gray-800">Dosage</th>
                     <th className="px-4 py-2 font-bold text-gray-800">Frequency</th>
@@ -292,7 +292,7 @@ export default function Profile() {
                 </thead>
                 <tbody>
                   {formData.medications.map((med, idx) => (
-                    <tr key={idx} className="border-b hover:bg-blue-50">
+                    <tr key={idx} className="border-b hover:bg-green-50">
                       <td className="px-4 py-3 font-semibold text-gray-800">{med.name}</td>
                       <td className="px-4 py-3 text-gray-700">{med.dosage || '-'}</td>
                       <td className="px-4 py-3 text-gray-700">{med.frequency || '-'}</td>
@@ -308,8 +308,8 @@ export default function Profile() {
         </div>
 
         {/* User Stats */}
-        <div className="grid md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
             <p className="text-sm font-semibold opacity-90">Account Status</p>
             <p className="text-2xl font-bold">Active</p>
             <p className="text-xs opacity-75 mt-2">✓ Verified</p>
@@ -322,7 +322,7 @@ export default function Profile() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg shadow-lg p-6 text-white">
             <p className="text-sm font-semibold opacity-90">Last Login</p>
             <p className="text-2xl font-bold">
               {user.lastLogin

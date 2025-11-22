@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
 
-export default function Register({ onRegisterSuccess, onSwitchToLogin }) {
+export default function Register({ onRegisterSuccess }) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -283,13 +284,10 @@ export default function Register({ onRegisterSuccess, onSwitchToLogin }) {
         {/* Login Link */}
         <div className="text-center">
           <p className="text-gray-700">
-            Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="text-green-600 hover:text-green-700 font-bold cursor-pointer"
-            >
+            Already have an account?
+            <Link to="/login" className="text-green-600 hover:text-green-700 font-bold cursor-pointer ml-1">
               Sign In
-            </button>
+            </Link>
           </p>
         </div>
 

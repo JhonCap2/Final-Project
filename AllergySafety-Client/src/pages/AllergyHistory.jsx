@@ -1,8 +1,12 @@
 import { useState } from 'react'
-import { FaHistory, FaPlus, FaTrash, FaCalendar, FaMapLocationDot, FaCheck } from 'react-icons/fa'
+import { FaHistory, FaPlus, FaTrash, FaCalendar, FaMapMarkerAlt, FaBell } from 'react-icons/fa'
+import { useEmergencyData } from './useEmergencyData' // Importar el hook
 
-export default function AllergyHistory({ userData, setUserData }) {
-  const [newIncident, setNewIncident] = useState({
+export default function AllergyHistory() {
+  const token = localStorage.getItem('token')
+  const { userData, addIncident, deleteIncident, sosHistory } = useEmergencyData(token)
+
+    const [newIncident, setNewIncident] = useState({
     date: new Date().toISOString().split('T')[0],
     allergen: '',
     severity: 'mild',
@@ -11,28 +15,21 @@ export default function AllergyHistory({ userData, setUserData }) {
     notes: ''
   })
 
-  const addIncident = () => {
+  const handleAddIncident = async () => {
     if (newIncident.date && newIncident.allergen.trim()) {
-      setUserData(prev => ({
-        ...prev,
-        allergyHistory: [...(prev.allergyHistory || []), newIncident]
-      }))
-      setNewIncident({
-        date: new Date().toISOString().split('T')[0],
-        allergen: '',
-        severity: 'mild',
-        location: '',
-        medication: '',
-        notes: ''
-      })
+      const success = await addIncident(newIncident);
+      if (success) {
+        // Resetear el formulario
+        setNewIncident({
+          date: new Date().toISOString().split('T')[0],
+          allergen: '',
+          severity: 'mild',
+          location: '',
+          medication: '',
+          notes: ''
+        })
+      }
     }
-  }
-
-  const removeIncident = (index) => {
-    setUserData(prev => ({
-      ...prev,
-      allergyHistory: prev.allergyHistory.filter((_, i) => i !== index)
-    }))
   }
 
   const getSeverityColor = (severity) => {
@@ -46,15 +43,37 @@ export default function AllergyHistory({ userData, setUserData }) {
 
   const sortedHistory = [...(userData?.allergyHistory || [])].sort((a, b) => new Date(b.date) - new Date(a.date))
 
+  const sortedSosHistory = [...(sosHistory || [])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg shadow-lg p-8 text-white mb-8">
           <h1 className="text-4xl font-bold mb-2 flex items-center gap-2">
-            <FaHistory /> Allergy Reaction History
+            <FaHistory /> Event History
           </h1>
-          <p className="text-purple-100">Track and manage your allergic reactions over time</p>
+          <p className="text-purple-100">Track your SOS alerts and allergic reactions over time</p>
+        </div>
+
+        {/* SOS Alerts History */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3"><FaBell className="text-red-500"/> SOS Alert History</h2>
+          {sortedSosHistory.length > 0 ? (
+            <div className="space-y-3">
+              {sortedSosHistory.map(alert => (
+                <div key={alert.id} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-red-800">SOS Alert Activated</p>
+                    <p className="text-sm text-gray-600">{new Date(alert.timestamp).toLocaleString()}</p>
+                  </div>
+                  <span className="text-red-500 font-bold">EMERGENCY</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">No SOS alerts have been recorded yet.</p>
+          )}
         </div>
 
         {/* Add New Incident */}
@@ -132,7 +151,7 @@ export default function AllergyHistory({ userData, setUserData }) {
               </div>
 
               <button
-                onClick={addIncident}
+                onClick={handleAddIncident}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 text-lg"
               >
                 <FaPlus /> Record Incident
@@ -143,7 +162,7 @@ export default function AllergyHistory({ userData, setUserData }) {
 
         {/* History Timeline */}
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
             Reaction Timeline ({sortedHistory.length} incidents)
           </h2>
 
@@ -187,7 +206,7 @@ export default function AllergyHistory({ userData, setUserData }) {
                       <div className="grid md:grid-cols-2 gap-4 mb-3">
                         {incident.location && (
                           <div className="flex items-start gap-2">
-                            <FaMapLocationDot className="mt-1 flex-shrink-0" />
+                            <FaMapMarkerAlt className="mt-1 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-semibold opacity-75">Location</p>
                               <p className="font-semibold">{incident.location}</p>
@@ -213,7 +232,7 @@ export default function AllergyHistory({ userData, setUserData }) {
 
                     {/* Delete Button */}
                     <button
-                      onClick={() => removeIncident(idx)}
+                      onClick={() => deleteIncident(incident.date)} // Usamos la fecha como ID único por ahora
                       className="p-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition ml-4 flex-shrink-0"
                       title="Delete Incident"
                     >
