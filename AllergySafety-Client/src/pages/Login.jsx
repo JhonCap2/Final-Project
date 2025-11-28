@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle, FaFacebook } from 'react-icons/fa'
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
@@ -23,64 +22,6 @@ export default function Login({ onLoginSuccess }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [forgotError, setForgotError] = useState('')
   const [forgotLoading, setForgotLoading] = useState(false)
-
-  const handleGoogleSuccess = (credentialResponse) => {
-    // credentialResponse.credential is the JWT token from Google
-    const googleToken = credentialResponse.credential
-    console.log('Google token received:', googleToken.substring(0, 20) + '...')
-    
-    // Verify token with backend and login user
-    axios.post('http://localhost:3001/api/auth/google', { token: googleToken }, {
-      headers: { 'Content-Type': 'application/json' }
-    }).then(res => {
-      const { token } = res.data
-      if (token) localStorage.setItem('token', token)
-      toast.success('✓ Logged in with Google!')
-      onLoginSuccess()
-    }).catch(err => {
-      const msg = err?.response?.data?.message || 'Google login failed'
-      setError(msg)
-      toast.error(msg)
-      console.error('Google login error:', err)
-    })
-  }
-
-  const handleGoogleError = () => {
-    const msg = 'Google login failed'
-    setError(msg)
-    toast.error(msg)
-  }
-
-  const handleFacebookLogin = () => {
-    // Facebook login via Facebook SDK (will be loaded via HTML)
-    if (window.FB) {
-      window.FB.login(function(response) {
-        if (response.authResponse) {
-          const facebookToken = response.authResponse.accessToken
-          console.log('Facebook token received:', facebookToken.substring(0, 20) + '...')
-          
-          // Send to backend for verification and login
-          axios.post('http://localhost:3001/api/auth/facebook', { token: facebookToken }, {
-            headers: { 'Content-Type': 'application/json' }
-          }).then(res => {
-            const { token } = res.data
-            if (token) localStorage.setItem('token', token)
-            toast.success('✓ Logged in with Facebook!')
-            onLoginSuccess()
-          }).catch(err => {
-            const msg = err?.response?.data?.message || 'Facebook login failed'
-            setError(msg)
-            toast.error(msg)
-            console.error('Facebook login error:', err)
-          })
-        } else {
-          toast.error('Facebook login cancelled')
-        }
-      }, {scope: 'public_profile,email'})
-    } else {
-      toast.error('Facebook SDK not loaded. Please refresh and try again.')
-    }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -215,8 +156,7 @@ export default function Login({ onLoginSuccess }) {
   }
 
   return (
-    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8">
@@ -328,20 +268,17 @@ export default function Login({ onLoginSuccess }) {
             {/* Social Login */}
             <div className="space-y-3">
               {/* Google Login */}
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  size="large"
-                  theme="outline"
-                  text="signin_with"
-                />
-              </div>
+              <button
+                type="button"
+                className="w-full border-2 border-gray-300 rounded-lg py-3 px-4 hover:border-blue-500 hover:bg-blue-50 transition font-semibold text-gray-700 flex items-center justify-center gap-2"
+              >
+                <FaGoogle className="text-red-500" />
+                <span>Login with Google</span>
+              </button>
 
               {/* Facebook Login */}
               <button
                 type="button"
-                onClick={handleFacebookLogin}
                 className="w-full border-2 border-gray-300 rounded-lg py-3 px-4 hover:border-blue-500 hover:bg-blue-50 transition font-semibold text-gray-700 flex items-center justify-center gap-2"
               >
                 <FaFacebook className="text-blue-600" />
@@ -522,7 +459,6 @@ export default function Login({ onLoginSuccess }) {
             </div>
           </div>
         )}
-      </div>
-    </GoogleOAuthProvider>
+    </div>
   )
 }
