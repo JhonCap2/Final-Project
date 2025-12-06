@@ -86,5 +86,6 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 AllergySafety API Server running on http://localhost:${PORT}`);
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  console.log(`🚀 AllergySafety API Server running on http://${host}:${PORT}`);
 });
