@@ -25,17 +25,14 @@ app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true, limit: '12mb' }));
 
 // Configure CORS
-const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174';
-const allowedOrigins = rawOrigins.split(',').map(s => s.trim());
-
 app.use(cors({
   origin: (origin, callback) => {
-    if (process.env.NODE_ENV !== 'production') return callback(null, true);
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      return callback(null, true);
+    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, false);
   },
   credentials: true
 }));

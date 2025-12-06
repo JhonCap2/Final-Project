@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm run dev --prefix AllergySafety-Server",
     "dev:client": "npm run dev --prefix AllergySafety-Client",
-    "install": "npm install && npm install --prefix AllergySafety-Server && npm install --prefix AllergySafety-Client",
+    "install": "npm ci && npm ci --prefix AllergySafety-Server && npm ci --prefix AllergySafety-Client",
     "build": "npm run build:client",
     "build:client": "npm run build --prefix AllergySafety-Client",
     "start": "npm start --prefix AllergySafety-Server"
