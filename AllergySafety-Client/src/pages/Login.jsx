@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import API from '../../axios' // Use the configured axios instance
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle, FaFacebook } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -49,10 +49,9 @@ export default function Login({ onLoginSuccess }) {
 
     // Call API
     try {
-      const res = await axios.post(
-        'http://localhost:3001/api/auth/login',
+      const res = await API.post(
+        '/auth/login',
         { email, password },
-        { headers: { 'Content-Type': 'application/json' } }
       )
 
       const { token } = res.data
@@ -83,9 +82,8 @@ export default function Login({ onLoginSuccess }) {
     }
 
     try {
-      const res = await axios.post(
-        'http://localhost:3001/api/auth/forgot-password',
-        { email: forgotEmail }
+      const res = await API.post(
+        '/auth/forgot-password', { email: forgotEmail }
       )
       
       // In development, the API returns the token directly (for testing)
@@ -129,9 +127,8 @@ export default function Login({ onLoginSuccess }) {
     }
 
     try {
-      const res = await axios.post(
-        'http://localhost:3001/api/auth/reset-password',
-        { token: resetToken, newPassword, confirmPassword }
+      const res = await API.post(
+        '/auth/reset-password', { token: resetToken, newPassword, confirmPassword }
       )
 
       const { token } = res.data
