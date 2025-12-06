@@ -34,16 +34,17 @@ export function useEmergencyData(token) {
       return;
     }
 
-    const source = axios.CancelToken.source();
-    const config = { cancelToken: source.token };
+    // Usar AbortController para cancelar peticiones (método moderno)
+    const controller = new AbortController();
+    const config = { signal: controller.signal };
 
     const fetchProfile = API.get('/users/profile', config);
     const fetchContacts = API.get('/contacts', config);
     const fetchAllergies = API.get('/allergies', config);
 
     Promise.all([fetchProfile, fetchContacts, fetchAllergies])
-      .then(axios.spread((profileRes, contactsRes, allergiesRes) => {
-        // Procesar perfil
+      .then(([profileRes, contactsRes, allergiesRes]) => {
+        // Procesar perfil (user)
         const user = profileRes.data.user;
         setUserData(prev => ({
           ...prev,
@@ -53,11 +54,11 @@ export function useEmergencyData(token) {
           medications: user.medications || [],
         }));
 
-        // Procesar contactos
+        // Procesar contactos (contacts)
         const contacts = Array.isArray(contactsRes.data.contacts) ? contactsRes.data.contacts : [];
         setEmergencyContacts(contacts);
 
-        // Procesar alergias
+        // Procesar alergias (allergies)
         const serverAllergies = Array.isArray(allergiesRes.data.allergies) ? allergiesRes.data.allergies.map(a => ({
           _id: a._id,
           name: a.allergen,
@@ -67,7 +68,7 @@ export function useEmergencyData(token) {
         setUserData(prev => ({ ...prev, allergies: serverAllergies }));
       }))
       .catch(err => {
-        if (axios.isCancel(err)) {
+        if (axios.isCancel(err) || err.name === 'CanceledError') {
           console.log('Request canceled:', err.message);
         } else {
           console.error('Failed to fetch initial data', err);
@@ -80,7 +81,7 @@ export function useEmergencyData(token) {
 
     // Cleanup: cancelar peticiones si el componente se desmonta
     return () => {
-      source.cancel('Component unmounted, canceling requests.');
+      controller.abort();
     };
   }, [token]);
 
