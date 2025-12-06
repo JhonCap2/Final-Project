@@ -51,6 +51,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
+// --- DEBUG: Log the NODE_ENV value ---
+console.log(`Current NODE_ENV: '${process.env.NODE_ENV}'`);
+
 // --- SERVE FRONTEND IN PRODUCTION ---
 if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
