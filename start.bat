@@ -83,5 +83,3 @@ echo.
 
 REM Iniciar las aplicaciones de forma concurrente
 npm run dev
-
-pause
