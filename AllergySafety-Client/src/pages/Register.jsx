@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 
@@ -73,9 +73,7 @@ export default function Register({ onRegisterSuccess }) {
         bloodType: formData.bloodType
       }
 
-      const res = await axios.post('http://localhost:3001/api/auth/register', payload, {
-        headers: { 'Content-Type': 'application/json' }
-      })
+      const res = await API.post('/auth/register', payload)
 
       const { token } = res.data
       if (token) localStorage.setItem('token', token)

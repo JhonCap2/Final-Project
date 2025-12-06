@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
+import API from '../../axios' // Use the configured axios instance
 import { FaPhone, FaPlus, FaTrash, FaStar, FaEnvelope } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
@@ -17,10 +16,7 @@ export default function EmergencyContactsPage() {
   }
 
   const handleSetPrimary = (id) => {
-    axios.put(`http://localhost:3001/api/contacts/${id}`, 
-      { isPrimary: true },
-      { headers: { Authorization: `Bearer ${token}` } }
-    ).then(() => {
+    API.put(`/contacts/${id}`, { isPrimary: true }).then(() => {
       setEmergencyContacts(contacts.map(c => ({
         ...c,
         isPrimary: c._id === id ? true : false

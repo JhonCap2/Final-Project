@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaCamera, FaPhone, FaTint, FaEdit, FaTimes, FaSave, FaHeartbeat, FaPills } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 
@@ -25,9 +25,7 @@ export default function Profile() {
       return
     }
 
-    axios.get('http://localhost:3001/api/users/profile', {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => {
+    API.get('/users/profile').then(res => {
       const userData = res.data.user
       setUser(userData)
       setFormData({
@@ -49,15 +47,14 @@ export default function Profile() {
   }, [token])
 
   const handleSaveProfile = () => {
-    axios.put('http://localhost:3001/api/users/profile', 
+    API.put('/users/profile', 
       {
         fullName: formData.fullName,
         phone: formData.phone,
         bloodType: formData.bloodType,
         medicalConditions: formData.medicalConditions,
         medications: formData.medications
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
+      }
     ).then(res => {
       setUser(res.data.user)
       setEditing(false)
@@ -80,10 +77,9 @@ export default function Profile() {
       const reader = new FileReader()
       reader.onloadend = () => {
         setProfilePic(reader.result)
-  
-        axios.put('http://localhost:3001/api/users/profile', 
-          { profilePicture: reader.result },
-          { headers: { Authorization: `Bearer ${token}` } }
+
+        API.put('/users/profile', 
+          { profilePicture: reader.result }
         ).then(res => {
           setUser(res.data.user)
           toast.success('Foto de perfil actualizada!')

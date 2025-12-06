@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaPlus, FaTrash, FaCheck } from 'react-icons/fa'
 
 export default function PersonalInfo({ userData, setUserData }) {
@@ -38,9 +38,7 @@ export default function PersonalInfo({ userData, setUserData }) {
     }
 
     // Persist to server
-    axios.post('http://localhost:3001/api/allergies', newAllergy, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => {
+    API.post('/allergies', newAllergy).then(res => {
       const allergy = res.data.allergy
       setFormData(prev => ({ ...prev, allergies: [allergy, ...prev.allergies] }))
       setNewAllergy({ name: '', severity: 'mild', reaction: '' })
@@ -55,9 +53,7 @@ export default function PersonalInfo({ userData, setUserData }) {
     const allergy = formData.allergies[index]
     const token = localStorage.getItem('token')
     if (allergy && allergy._id && token) {
-      axios.delete(`http://localhost:3001/api/allergies/${allergy._id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(() => {
+      API.delete(`/allergies/${allergy._id}`).then(() => {
         setFormData(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== index) }))
         import('react-toastify').then(({ toast }) => toast.success('Allergy deleted'))
       }).catch(err => {
@@ -113,12 +109,7 @@ export default function PersonalInfo({ userData, setUserData }) {
       return
     }
 
-    axios.put('http://localhost:3001/api/users/profile', { bloodType: formData.bloodType }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    }).then(() => {
+    API.put('/users/profile', { bloodType: formData.bloodType }).then(() => {
       import('react-toastify').then(({ toast }) => toast.success('Blood type updated!'))
     }).catch((err) => {
       console.error('Error updating blood type', err)
@@ -148,12 +139,7 @@ export default function PersonalInfo({ userData, setUserData }) {
       medications: formData.medications
     }
 
-    axios.put('http://localhost:3001/api/users/profile', dataToSend, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    }).then(() => {
+    API.put('/users/profile', dataToSend).then(() => {
       import('react-toastify').then(({ toast }) => toast.success('Personal information saved and synced with server!'))
     }).catch((err) => {
       console.error('Error updating profile', err)
@@ -172,7 +158,7 @@ export default function PersonalInfo({ userData, setUserData }) {
     if (!allergy) return
 
     if (allergy._id && token) {
-      axios.put(`http://localhost:3001/api/allergies/${allergy._id}`, allergy, { headers: { Authorization: `Bearer ${token}` } })
+      API.put(`/allergies/${allergy._id}`, allergy)
         .then(res => {
           const updated = res.data.allergy
           setFormData(prev => {
@@ -194,7 +180,7 @@ export default function PersonalInfo({ userData, setUserData }) {
         setEditingAllergyIndex(null)
         return
       }
-      axios.post('http://localhost:3001/api/allergies', allergy, { headers: { Authorization: `Bearer ${token}` } })
+      API.post('/allergies', allergy)
         .then(res => {
           const created = res.data.allergy
           setFormData(prev => {
