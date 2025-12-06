@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -51,6 +53,22 @@ app.use('/api/contacts', contactRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
+
+// --- SERVE FRONTEND IN PRODUCTION ---
+if (process.env.NODE_ENV === 'production') {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
+
+  // For any route that is not an API route, send the index.html from the client build
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => res.send('API is running in development mode...'));
+}
 
 // 404 handler
 app.use((req, res) => {
