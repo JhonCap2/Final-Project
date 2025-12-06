@@ -7,13 +7,10 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm run dev --prefix AllergySafety-Server",
     "dev:client": "npm run dev --prefix AllergySafety-Client",
-    "install:all": "npm install && npm install --prefix AllergySafety-Server && npm install --prefix AllergySafety-Client",
+    "install": "npm install && npm install --prefix AllergySafety-Server && npm install --prefix AllergySafety-Client",
     "build": "npm run build:client",
-    "build:server": "echo \"No build step for server\"",
     "build:client": "npm run build --prefix AllergySafety-Client",
-    "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
-    "start:server": "node AllergySafety-Server/server.js",
-    "start:client": "npm run preview --prefix AllergySafety-Client"
+    "start": "npm start --prefix AllergySafety-Server"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",
