@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../../axios'; // Usar la instancia configurada de Axios
+import axios from 'axios'; // Importar el objeto principal de axios
 import { toast } from 'react-toastify';
 
 export function useEmergencyData(token) {
@@ -33,7 +34,7 @@ export function useEmergencyData(token) {
       return;
     }
 
-    const source = API.CancelToken.source();
+    const source = axios.CancelToken.source();
     const config = { cancelToken: source.token };
 
     const fetchProfile = API.get('/users/profile', config);
@@ -66,7 +67,7 @@ export function useEmergencyData(token) {
         setUserData(prev => ({ ...prev, allergies: serverAllergies }));
       }))
       .catch(err => {
-        if (API.isCancel(err)) {
+        if (axios.isCancel(err)) {
           console.log('Request canceled:', err.message);
         } else {
           console.error('Failed to fetch initial data', err);
