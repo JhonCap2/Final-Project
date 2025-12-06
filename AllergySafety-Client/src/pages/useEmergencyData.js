@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import API from '../../axios'; // Usar la instancia configurada de Axios
-import axios from 'axios'; // Importar el objeto principal de axios
 import { toast } from 'react-toastify';
 
 export function useEmergencyData(token) {
@@ -23,69 +22,67 @@ export function useEmergencyData(token) {
     }
   });
 
+  // --- DATA FETCHING ---
   useEffect(() => {
     if (!token) {
       setLoading(false);
-      // Cargar datos locales si no hay token
       try {
         const localUserData = localStorage.getItem("userMedicalData");
         if (localUserData) setUserData(JSON.parse(localUserData));
       } catch { /* Ignorar error */ }
       return;
     }
-
-    // Usar AbortController para cancelar peticiones (método moderno)
+    
     const controller = new AbortController();
     const config = { signal: controller.signal };
 
-    const fetchProfile = API.get('/users/profile', config);
-    const fetchContacts = API.get('/contacts', config);
-    const fetchAllergies = API.get('/allergies', config);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [profileRes, contactsRes, allergiesRes] = await Promise.all([
+          API.get('/users/profile', config),
+          API.get('/contacts', config),
+          API.get('/allergies', config)
+        ]);
 
-    Promise.all([fetchProfile, fetchContacts, fetchAllergies])
-      .then(([profileRes, contactsRes, allergiesRes]) => {
-        // Procesar perfil (user)
         const user = profileRes.data.user;
-        setUserData(prev => ({
-          ...prev,
-          fullName: user.fullName || '',
-          bloodType: user.bloodType || '',
-          medicalConditions: user.medicalConditions || [],
-          medications: user.medications || [],
-        }));
-
-        // Procesar contactos (contacts)
         const contacts = Array.isArray(contactsRes.data.contacts) ? contactsRes.data.contacts : [];
-        setEmergencyContacts(contacts);
-
-        // Procesar alergias (allergies)
         const serverAllergies = Array.isArray(allergiesRes.data.allergies) ? allergiesRes.data.allergies.map(a => ({
           _id: a._id,
           name: a.allergen,
           severity: a.severity ? a.severity.toLowerCase() : 'moderate',
           reaction: a.reactions || ''
         })) : [];
-        setUserData(prev => ({ ...prev, allergies: serverAllergies }));
-      }))
-      .catch(err => {
-        if (axios.isCancel(err) || err.name === 'CanceledError') {
+
+        setUserData({
+          fullName: user.fullName || '',
+          bloodType: user.bloodType || '',
+          medicalConditions: user.medicalConditions || [],
+          medications: user.medications || [],
+          allergies: serverAllergies
+        });
+        setEmergencyContacts(contacts);
+
+      } catch (err) {
+        if (err.name === 'CanceledError') {
           console.log('Request canceled:', err.message);
         } else {
           console.error('Failed to fetch initial data', err);
           toast.error('Failed to load data from server. Some data may be from local cache.');
         }
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
 
-    // Cleanup: cancelar peticiones si el componente se desmonta
+    fetchData();
+
     return () => {
       controller.abort();
     };
   }, [token]);
 
-  // Persistencia local
+  // --- LOCAL STORAGE PERSISTENCE ---
   useEffect(() => {
     localStorage.setItem("emergencyContacts", JSON.stringify(emergencyContacts || []));
   }, [emergencyContacts]);
@@ -102,10 +99,10 @@ export function useEmergencyData(token) {
 
   // --- CRUD Functions ---
 
-  const addContact = async (newContact) => {
+  const addContact = useCallback(async (newContact) => {
     if (token) {
       try {
-        const res = await API.post('/contacts', newContact);
+        const res = await API.post('/contacts', newContact, { signal: AbortSignal.timeout(5000) });
         const contact = res.data.contact;
         setEmergencyContacts(prev => [contact, ...(prev || [])]);
         toast.success('Emergency contact saved to server');
@@ -120,13 +117,13 @@ export function useEmergencyData(token) {
       toast.info('Added contact locally. Log in to persist');
       return true; // Success (local)
     }
-  };
+  }, [token]);
 
-  const deleteContact = async (id) => {
+  const deleteContact = useCallback(async (id) => {
     const contact = (emergencyContacts || []).find(c => (c._id || c.id) === id);
     if (contact && contact._id && token) {
       try {
-        await API.delete(`/contacts/${contact._id}`);
+        await API.delete(`/contacts/${contact._id}`, { signal: AbortSignal.timeout(5000) });
         setEmergencyContacts(prev => (prev || []).filter(c => (c._id || c.id) !== contact._id));
         toast.success('Contact deleted from server');
       } catch (err) {
@@ -137,13 +134,13 @@ export function useEmergencyData(token) {
       setEmergencyContacts(prev => (prev || []).filter(c => (c._id || c.id) !== id));
       toast.info('Contact deleted locally');
     }
-  };
+  }, [token, emergencyContacts]);
 
-  const addAllergy = async (newAllergy) => {
+  const addAllergy = useCallback(async (newAllergy) => {
     const severityServer = newAllergy.severity.charAt(0).toUpperCase() + newAllergy.severity.slice(1);
     if (token) {
       try {
-        const res = await API.post('/allergies', { allergen: newAllergy.name, severity: severityServer });
+        const res = await API.post('/allergies', { allergen: newAllergy.name, severity: severityServer }, { signal: AbortSignal.timeout(5000) });
         const a = res.data.allergy;
         const clientAllergy = { _id: a._id, name: a.allergen, severity: (a.severity || severityServer).toLowerCase(), reaction: a.reactions || '' };
         setUserData(prev => ({ ...prev, allergies: [clientAllergy, ...(prev.allergies || [])] }));
@@ -159,62 +156,60 @@ export function useEmergencyData(token) {
       toast.info('Added allergy locally. Log in to persist');
       return true;
     }
-  };
+  }, [token]);
 
-  const deleteAllergy = async (id) => {
+  const deleteAllergy = useCallback(async (id) => {
     const allergy = (userData.allergies || []).find(a => (a._id || a.id) === id);
     if (allergy && allergy._id && token) {
-      await API.delete(`/allergies/${allergy._id}`);
-      setUserData(prev => ({ ...prev, allergies: (prev.allergies || []).filter(a => (a._id || a.id) !== allergy._id) }));
-      toast.success('Allergy deleted from server');
+      try {
+        await API.delete(`/allergies/${allergy._id}`, { signal: AbortSignal.timeout(5000) });
+        setUserData(prev => ({ ...prev, allergies: (prev.allergies || []).filter(a => (a._id || a.id) !== allergy._id) }));
+        toast.success('Allergy deleted from server');
+      } catch (err) {
+        console.error('Delete allergy failed', err);
+        toast.error('Failed to delete allergy from server.');
+      }
     } else {
       setUserData(prev => ({ ...prev, allergies: (prev.allergies || []).filter(a => (a._id || a.id) !== id) }));
       toast.info('Allergy deleted locally');
     }
-  };
+  }, [token, userData.allergies]);
 
-  const addMedication = async (newMedication) => {
-    // En la app real, esto haría una llamada a la API.
-    // Por ahora, lo manejamos localmente como en el Dashboard.
-    // La lógica para guardar permanentemente está en Profile.jsx.
+  const addMedication = useCallback(async (newMedication) => {
     setUserData(prev => ({
       ...prev,
       medications: [{ id: Date.now(), ...newMedication }, ...(prev.medications || [])]
     }));
     toast.info('Medication added locally. Save on your Profile page to persist.');
     return true;
-  };
+  }, []);
 
-  const deleteMedication = async (id) => {
-    // Similar a addMedication, se maneja localmente aquí.
+  const deleteMedication = useCallback(async (id) => {
     setUserData(prev => ({
       ...prev,
       medications: (prev.medications || []).filter(m => (m.id || m._id) !== id)
     }));
     toast.info('Medication removed locally.');
-  };
+  }, []);
 
-  const addIncident = async (newIncident) => {
-    // En una app real, esto guardaría el incidente en el servidor.
-    // Por ahora, lo guardamos en el estado local de userData.
+  const addIncident = useCallback(async (newIncident) => {
     setUserData(prev => ({
       ...prev,
       allergyHistory: [newIncident, ...(prev.allergyHistory || [])]
     }));
     toast.success('Allergy incident recorded.');
     return true;
-  };
+  }, []);
 
-  const deleteIncident = async (incidentDate) => {
-    // Filtra el historial para eliminar el incidente por su fecha/ID único
+  const deleteIncident = useCallback(async (incidentDate) => {
     setUserData(prev => ({
       ...prev,
       allergyHistory: (prev.allergyHistory || []).filter(inc => inc.date !== incidentDate)
     }));
     toast.info('Incident removed.');
-  };
+  }, []);
 
-  const recordSOSAlert = async () => {
+  const recordSOSAlert = useCallback(async () => {
     const newAlert = {
       id: Date.now(),
       timestamp: new Date().toISOString(),
@@ -223,11 +218,11 @@ export function useEmergencyData(token) {
     setSosHistory(prev => [newAlert, ...(prev || [])]);
     toast.warning('🚨 SOS Alert Recorded in History!');
     return true;
-  };
+  }, []);
 
   return { 
     loading, userData, setUserData, 
-    emergencyContacts, addContact, deleteContact, 
+    emergencyContacts, setEmergencyContacts, addContact, deleteContact, 
     addAllergy, deleteAllergy,
     addMedication, deleteMedication,
     addIncident, deleteIncident,
