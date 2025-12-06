@@ -2,6 +2,7 @@ import { useState } from 'react'
 import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 export default function Register({ onRegisterSuccess }) {
   const [formData, setFormData] = useState({
@@ -84,7 +85,7 @@ export default function Register({ onRegisterSuccess }) {
       setLoading(false)
       const msg = err?.response?.data?.message || 'Registration failed'
       setError(msg)
-      import('react-toastify').then(({ toast }) => toast.error(msg))
+      toast.error(msg)
     }
   }
 

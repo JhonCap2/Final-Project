@@ -2,6 +2,7 @@ import { useState } from 'react'
 import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaPlus, FaTrash, FaCheck } from 'react-icons/fa'
 
+import { toast } from 'react-toastify'
 export default function PersonalInfo({ userData, setUserData }) {
   const [formData, setFormData] = useState({
     fullName: userData?.fullName || '',
@@ -33,7 +34,7 @@ export default function PersonalInfo({ userData, setUserData }) {
         allergies: [...prev.allergies, newAllergy]
       }))
       setNewAllergy({ name: '', severity: 'mild', reaction: '' })
-      import('react-toastify').then(({ toast }) => toast.info('Added allergy locally. Log in to persist.'))
+      toast.info('Added allergy locally. Log in to persist.')
       return
     }
 
@@ -42,10 +43,10 @@ export default function PersonalInfo({ userData, setUserData }) {
       const allergy = res.data.allergy
       setFormData(prev => ({ ...prev, allergies: [allergy, ...prev.allergies] }))
       setNewAllergy({ name: '', severity: 'mild', reaction: '' })
-      import('react-toastify').then(({ toast }) => toast.success('Allergy created'))
+      toast.success('Allergy created')
     }).catch(err => {
       console.error('Create allergy failed', err)
-      import('react-toastify').then(({ toast }) => toast.error('Failed to create allergy'))
+      toast.error('Failed to create allergy')
     })
   }
 
@@ -55,10 +56,10 @@ export default function PersonalInfo({ userData, setUserData }) {
     if (allergy && allergy._id && token) {
       API.delete(`/allergies/${allergy._id}`).then(() => {
         setFormData(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== index) }))
-        import('react-toastify').then(({ toast }) => toast.success('Allergy deleted'))
+        toast.success('Allergy deleted')
       }).catch(err => {
         console.error('Delete allergy failed', err)
-        import('react-toastify').then(({ toast }) => toast.error('Failed to delete allergy'))
+        toast.error('Failed to delete allergy')
       })
     } else {
       // local only
@@ -72,7 +73,7 @@ export default function PersonalInfo({ userData, setUserData }) {
     // For now, store medications on user profile
     setFormData(prev => ({ ...prev, medications: [...prev.medications, newMedication] }))
     setNewMedication({ name: '', dosage: '', allergyFor: '' })
-    import('react-toastify').then(({ toast }) => toast.info('Medication added locally. Save to sync.'))
+    toast.info('Medication added locally. Save to sync.')
   }
 
   const removeMedication = (index) => {
@@ -105,15 +106,15 @@ export default function PersonalInfo({ userData, setUserData }) {
     // Send blood type update to backend if token exists
     const token = localStorage.getItem('token')
     if (!token) {
-      import('react-toastify').then(({ toast }) => toast.info('Saved locally. Log in to sync with server.'))
+      toast.info('Saved locally. Log in to sync with server.')
       return
     }
 
     API.put('/users/profile', { bloodType: formData.bloodType }).then(() => {
-      import('react-toastify').then(({ toast }) => toast.success('Blood type updated!'))
+      toast.success('Blood type updated!')
     }).catch((err) => {
       console.error('Error updating blood type', err)
-      import('react-toastify').then(({ toast }) => toast.error('Failed to update blood type: ' + (err?.response?.data?.message || err.message)))
+      toast.error('Failed to update blood type: ' + (err?.response?.data?.message || err.message))
     })
   }
 
@@ -126,7 +127,7 @@ export default function PersonalInfo({ userData, setUserData }) {
     // Send update to backend if token exists
     const token = localStorage.getItem('token')
     if (!token) {
-      import('react-toastify').then(({ toast }) => toast.info('Saved locally. Log in to sync with server.'))
+      toast.info('Saved locally. Log in to sync with server.')
       return
     }
 
@@ -140,10 +141,10 @@ export default function PersonalInfo({ userData, setUserData }) {
     }
 
     API.put('/users/profile', dataToSend).then(() => {
-      import('react-toastify').then(({ toast }) => toast.success('Personal information saved and synced with server!'))
+      toast.success('Personal information saved and synced with server!')
     }).catch((err) => {
       console.error('Error updating profile', err)
-      import('react-toastify').then(({ toast }) => toast.error('Saved locally but failed to sync: ' + (err?.response?.data?.message || err.message)))
+      toast.error('Saved locally but failed to sync: ' + (err?.response?.data?.message || err.message))
     })
   }
 
@@ -167,16 +168,16 @@ export default function PersonalInfo({ userData, setUserData }) {
             return { ...prev, allergies: arr }
           })
           setEditingAllergyIndex(null)
-          import('react-toastify').then(({ toast }) => toast.success('Allergy updated'))
+          toast.success('Allergy updated')
         }).catch(err => {
           console.error('Update allergy failed', err)
-          import('react-toastify').then(({ toast }) => toast.error('Failed to update allergy'))
+          toast.error('Failed to update allergy')
         })
     } else {
       // Create new allergy if no _id
       const token = localStorage.getItem('token')
       if (!token) {
-        import('react-toastify').then(({ toast }) => toast.info('Login to persist allergy'))
+        toast.info('Login to persist allergy')
         setEditingAllergyIndex(null)
         return
       }
@@ -189,10 +190,10 @@ export default function PersonalInfo({ userData, setUserData }) {
             return { ...prev, allergies: arr }
           })
           setEditingAllergyIndex(null)
-          import('react-toastify').then(({ toast }) => toast.success('Allergy created'))
+          toast.success('Allergy created')
         }).catch(err => {
           console.error('Create allergy failed', err)
-          import('react-toastify').then(({ toast }) => toast.error('Failed to create allergy'))
+          toast.error('Failed to create allergy')
         })
     }
   }
