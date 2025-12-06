@@ -12,7 +12,7 @@
     "build:server": "echo \"No build step for server\"",
     "build:client": "npm run build --prefix AllergySafety-Client",
     "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
-    "start:server": "npm start --prefix AllergySafety-Server",
+    "start:server": "node AllergySafety-Server/server.js",
     "start:client": "npm run preview --prefix AllergySafety-Client"
   },
   "devDependencies": {
