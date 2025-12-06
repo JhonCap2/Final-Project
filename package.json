@@ -5,15 +5,15 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd AllergySafety-Server && npm run dev",
-    "dev:client": "cd AllergySafety-Client && npm run dev",
-    "install:all": "npm install && cd AllergySafety-Server && npm install && cd ../AllergySafety-Client && npm install",
+    "dev:server": "npm run dev --prefix AllergySafety-Server",
+    "dev:client": "npm run dev --prefix AllergySafety-Client",
+    "install:all": "npm install && npm install --prefix AllergySafety-Server && npm install --prefix AllergySafety-Client",
     "build": "concurrently \"npm run build:server\" \"npm run build:client\"",
-    "build:server": "cd AllergySafety-Server && npm run build",
-    "build:client": "cd AllergySafety-Client && npm run build",
+    "build:server": "npm run build --prefix AllergySafety-Server",
+    "build:client": "npm run build --prefix AllergySafety-Client",
     "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
-    "start:server": "cd AllergySafety-Server && npm start",
-    "start:client": "cd AllergySafety-Client && npm run preview"
+    "start:server": "npm start --prefix AllergySafety-Server",
+    "start:client": "npm run preview --prefix AllergySafety-Client"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",

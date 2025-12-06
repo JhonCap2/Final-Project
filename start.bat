@@ -53,21 +53,8 @@ set /p install="Respuesta: "
 
 if /i "%install%"=="S" (
     echo.
-    echo Instalando dependencias globales...
-    call npm install
-    
-    echo.
-    echo Instalando dependencias del servidor...
-    cd AllergySafety-Server
-    call npm install
-    cd ..
-    
-    echo.
-    echo Instalando dependencias del cliente...
-    cd AllergySafety-Client
-    call npm install
-    cd ..
-    
+    echo Instalando dependencias del cliente y servidor...
+    call npm run install:all
     echo.
     echo [✓] Dependencias instaladas
     echo.
@@ -94,7 +81,7 @@ echo.
 echo Presiona Ctrl+C en ambas ventanas para detener
 echo.
 
-REM Iniciar las aplicaciones
+REM Iniciar las aplicaciones de forma concurrente
 npm run dev
 
 pause
