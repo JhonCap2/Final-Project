@@ -1,27 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import API from '../../axios' // Use the configured axios instance
 import { FaUser, FaPlus, FaTrash, FaCheck } from 'react-icons/fa'
 
 import { toast } from 'react-toastify'
 export default function PersonalInfo({ userData, setUserData }) {
   const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    bloodType: '',
-    allergies: [],
-    medicalConditions: [],
-    medications: []
-  })
-
-  useEffect(() => {
-    setFormData({
     fullName: userData?.fullName || '',
     phone: userData?.phone || '',
     bloodType: userData?.bloodType || '',
+    allergies: userData?.allergies || [],
     medicalConditions: userData?.medicalConditions || [],
     medications: userData?.medications || []
   })
-  }, [userData])
 
   const [newAllergy, setNewAllergy] = useState({ name: '', severity: 'mild', reaction: '' })
   const [newMedication, setNewMedication] = useState({ name: '', dosage: '', allergyFor: '' })
@@ -34,37 +24,20 @@ export default function PersonalInfo({ userData, setUserData }) {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  // Helper to update an item in a list immutably
-  const handleListChange = (listName, index, field, value) => {
-    setFormData(prev => {
-      const newList = [...prev[listName]]
-      newList[index] = {
-        ...newList[index],
-        [field]: value
-      }
-      return { ...prev, [listName]: newList }
-    })
-  }
-
   const addAllergy = () => {
     if (!newAllergy.name.trim()) return
 
+    // Check for token
     const token = localStorage.getItem('token')
     if (!token) {
-      // Fallback: add locally
-      setFormData(prev => ({
-        ...prev, // This will be saved with the main "Save" button
-        allergies: [newAllergy, ...prev.allergies]
-      }))
-      setNewAllergy({ name: '', severity: 'mild', reaction: '' }) // Reset form
-      toast.info('Added allergy locally. Log in to persist.')
+      toast.info('Login to persist allergy')
       return
     }
 
     // Persist to server
     API.post('/allergies', newAllergy).then(res => {
       const allergy = res.data.allergy
-      setUserData(prev => ({ ...prev, allergies: [allergy, ...prev.allergies] })) // Update parent state directly
+      setFormData(prev => ({ ...prev, allergies: [allergy, ...prev.allergies] }))
       setNewAllergy({ name: '', severity: 'mild', reaction: '' })
       toast.success('Allergy created')
     }).catch(err => {
@@ -78,14 +51,13 @@ export default function PersonalInfo({ userData, setUserData }) {
     const token = localStorage.getItem('token')
     if (allergy && allergy._id && token) {
       API.delete(`/allergies/${allergy._id}`).then(() => {
-        setUserData(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== index) }))
+        setFormData(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== index) }))
         toast.success('Allergy deleted')
       }).catch(err => {
         console.error('Delete allergy failed', err)
         toast.error('Failed to delete allergy')
       })
-    } else { // if no _id or no token, just remove from local state
-      // local only
+    } else {
       setFormData(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== index) }))
     }
   }
@@ -95,7 +67,7 @@ export default function PersonalInfo({ userData, setUserData }) {
 
     // For now, store medications on user profile
     setFormData(prev => ({ ...prev, medications: [...prev.medications, newMedication] }))
-    setNewMedication({ name: '', dosage: '', allergyFor: '' }) // Reset form
+    setNewMedication({ name: '', dosage: '', allergyFor: '' })
     toast.info('Medication added locally. Save to sync.')
   }
 
@@ -120,12 +92,36 @@ export default function PersonalInfo({ userData, setUserData }) {
     }))
   }
 
+  const handleSaveBloodType = () => {
+    setUserData(prev => ({
+      ...prev,
+      bloodType: formData.bloodType
+    }))
+
+    // Send blood type update to backend if token exists
+    const token = localStorage.getItem('token')
+    if (!token) {
+      toast.info('Saved locally. Log in to sync with server.')
+      return
+    }
+
+    API.put('/users/profile', { bloodType: formData.bloodType }).then(() => {
+      toast.success('Blood type updated!')
+    }).catch((err) => {
+      console.error('Error updating blood type', err)
+      toast.error('Failed to update blood type: ' + (err?.response?.data?.message || err.message))
+    })
+  }
+
   const handleSave = () => {
+    setUserData(prev => ({
+      ...prev,
+      ...formData
+    }))
+
     // Send update to backend if token exists
     const token = localStorage.getItem('token')
     if (!token) {
-      // If not logged in, just update the parent state for local persistence
-      setUserData(prev => ({ ...prev, ...formData }))
       toast.info('Saved locally. Log in to sync with server.')
       return
     }
@@ -139,9 +135,8 @@ export default function PersonalInfo({ userData, setUserData }) {
       medications: formData.medications
     }
 
-    API.put('/users/profile', dataToSend).then((res) => {
+    API.put('/users/profile', dataToSend).then(() => {
       toast.success('Personal information saved and synced with server!')
-      setUserData(prev => ({ ...prev, ...res.data.user })) // Sync parent state with response from server
     }).catch((err) => {
       console.error('Error updating profile', err)
       toast.error('Saved locally but failed to sync: ' + (err?.response?.data?.message || err.message))
@@ -157,30 +152,45 @@ export default function PersonalInfo({ userData, setUserData }) {
     const allergy = formData.allergies[index]
     const token = localStorage.getItem('token')
     if (!allergy) return
-    if (!token) {
-      toast.info('Login to save changes to allergies.')
-      setEditingAllergyIndex(null)
-      return
+
+    if (allergy._id && token) {
+      API.put(`/allergies/${allergy._id}`, allergy)
+        .then(res => {
+          const updated = res.data.allergy
+          setFormData(prev => {
+            const arr = [...prev.allergies]
+            arr[index] = updated
+            return { ...prev, allergies: arr }
+          })
+          setEditingAllergyIndex(null)
+          toast.success('Allergy updated')
+        }).catch(err => {
+          console.error('Update allergy failed', err)
+          toast.error('Failed to update allergy')
+        })
+    } else {
+      // Create new allergy if no _id
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.info('Login to persist allergy')
+        setEditingAllergyIndex(null)
+        return
+      }
+      API.post('/allergies', allergy)
+        .then(res => {
+          const created = res.data.allergy
+          setFormData(prev => {
+            const arr = [...prev.allergies]
+            arr[index] = created
+            return { ...prev, allergies: arr }
+          })
+          setEditingAllergyIndex(null)
+          toast.success('Allergy created')
+        }).catch(err => {
+          console.error('Create allergy failed', err)
+          toast.error('Failed to create allergy')
+        })
     }
-
-    const apiCall = allergy._id
-      ? API.put(`/allergies/${allergy._id}`, allergy) // Update existing
-      : API.post('/allergies', allergy) // Create new
-
-    apiCall.then(res => {
-      const updatedOrCreatedAllergy = res.data.allergy
-      // Update the parent state directly for consistency
-      setUserData(prev => {
-        const newAllergies = [...prev.allergies]
-        newAllergies[index] = updatedOrCreatedAllergy
-        return { ...prev, allergies: newAllergies }
-      })
-      setEditingAllergyIndex(null)
-      toast.success(`Allergy ${allergy._id ? 'updated' : 'created'} successfully!`)
-    }).catch(err => {
-      console.error(`Failed to ${allergy._id ? 'update' : 'create'} allergy`, err)
-      toast.error(`Failed to ${allergy._id ? 'update' : 'create'} allergy.`)
-    })
   }
 
   return (
@@ -222,17 +232,30 @@ export default function PersonalInfo({ userData, setUserData }) {
             </div>
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-semibold mb-2">Blood Type</label>
-              <select
-                name="bloodType"
-                value={formData.bloodType}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Blood Type</option>
-                {[ "O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-" ].map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  name="bloodType"
+                  value={formData.bloodType}
+                  onChange={handleInputChange}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Blood Type</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+                <button
+                  onClick={handleSaveBloodType}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2"
+                >
+                  <FaCheck /> Save
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -336,13 +359,21 @@ export default function PersonalInfo({ userData, setUserData }) {
                             <input
                               type="text"
                               value={allergy.name}
-                              onChange={(e) => handleListChange('allergies', idx, 'name', e.target.value)}
+                              onChange={(e) => setFormData(prev => {
+                                const arr = [...prev.allergies]
+                                arr[idx] = { ...arr[idx], name: e.target.value }
+                                return { ...prev, allergies: arr }
+                              })}
                               className="w-full px-3 py-2 border border-gray-300 rounded"
                             />
                             <div className="grid md:grid-cols-2 gap-2">
                               <select
                                 value={allergy.severity}
-                                onChange={(e) => handleListChange('allergies', idx, 'severity', e.target.value)}
+                                onChange={(e) => setFormData(prev => {
+                                  const arr = [...prev.allergies]
+                                  arr[idx] = { ...arr[idx], severity: e.target.value }
+                                  return { ...prev, allergies: arr }
+                                })}
                                 className="px-3 py-2 border border-gray-300 rounded"
                               >
                                 <option value="mild">Mild</option>
@@ -352,7 +383,11 @@ export default function PersonalInfo({ userData, setUserData }) {
                               <input
                                 type="text"
                                 value={allergy.reaction}
-                                onChange={(e) => handleListChange('allergies', idx, 'reaction', e.target.value)}
+                                onChange={(e) => setFormData(prev => {
+                                  const arr = [...prev.allergies]
+                                  arr[idx] = { ...arr[idx], reaction: e.target.value }
+                                  return { ...prev, allergies: arr }
+                                })}
                                 className="px-3 py-2 border border-gray-300 rounded"
                               />
                             </div>

@@ -8,25 +8,25 @@ export default function Welcome({ onWelcomeComplete }) {
     {
       title: "Welcome",
       description: "Every second counts during an allergic emergency. AllergySafety ensures immediate help reaches you.",
-      image: "public/Welcome.png",
+      image: "/Welcome.png",
       color: "from-green-400 to-green-600"
     },
     {
       title: "Emergency Alert",
       description: "One-click emergency activation. Your location is instantly shared with responders and emergency contacts.",
-      image: "public/Emergency Alert.png",
+      image: "/Emergency Alert.png",
       color: "from-orange-400 to-orange-600"
     },
     {
       title: "Medical Info",
       description: "Store your allergies, medications, and medical history for quick access during emergencies.",
-      image: "public/Medical Info.png",
+      image: "/Medical Info.png",
       color: "from-purple-400 to-purple-600"
     },
     {
       title: "GPS Tracking",
       description: "Real-time location tracking ensures paramedics and hospitals know exactly where you are.",
-      image: "public/GPS Tracking.png",
+      image: "/GPS Tracking.png",
       color: "from-blue-400 to-blue-600"
     }
   ]
