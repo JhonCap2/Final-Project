@@ -10,7 +10,7 @@ export default function PublicNavbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <NavLink to="/" className="flex items-center">
-            <img className="h-8 w-auto" src="/logo.jpg" alt="AllergySafety Logo" />
+            <img className="h-10 w-auto" src="/logo.png" alt="AllergySafety Logo" />
           </NavLink> 
           
           {/* Desktop Menu */}

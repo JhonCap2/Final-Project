@@ -27,7 +27,7 @@ export default function DashboardNavbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/dashboard" className="flex items-center">
-              <img className="h-8 w-auto" src="/logo.png" alt="AllergySafety Logo" />
+              <img className="h-10 w-auto" src="/logo.png" alt="AllergySafety Logo" />
             </Link>
           </div>
 
