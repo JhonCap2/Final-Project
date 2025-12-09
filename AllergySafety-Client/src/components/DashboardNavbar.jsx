@@ -17,7 +17,6 @@ export default function DashboardNavbar() {
   const navLinks = [
     { to: '/dashboard', text: 'Dashboard' },
     { to: '/profile', text: 'My profile' },
-    { to: '/allergies', text: 'Allergies' },
     { to: '/contacts', text: 'Contact' },
   ];
 
