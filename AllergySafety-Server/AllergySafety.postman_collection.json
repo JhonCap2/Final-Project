@@ -248,6 +248,31 @@
         }
       ]
     }
+    ,
+    {
+      "name": "SOS",
+      "item": [
+        {
+          "name": "Trigger SOS Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/sos",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "sos"]
+            }
+          }
+        }
+      ]
+    }
   ],
   "variable": [
     {
