@@ -5,9 +5,9 @@ export default function PublicNavbar() {
     <nav className="bg-slate-900/80 shadow-md fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <NavLink to="/" className="text-xl font-bold text-green-400">
-            AllergySafety
-          </NavLink>
+          <NavLink to="/" className="flex items-center">
+            <img className="h-8 w-auto" src="/logo.jpg" alt="AllergySafety Logo" />
+          </NavLink> 
           
           <div className="flex items-center gap-4">
             <NavLink 
