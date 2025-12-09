@@ -4,7 +4,6 @@ import { toast } from 'react-toastify'
 import { FaPhone, FaUser, FaHistory, FaShieldAlt, FaClock, FaTimes, FaTrash, FaBell, FaPlus } from "react-icons/fa" 
 // Importa el nuevo hook personalizado. En un proyecto real, la ruta sería `../hooks/useEmergencyData`
 import { useEmergencyData } from "./useEmergencyData" 
-import DashboardNavbar from "../components/DashboardNavbar";
 
 const styles = `
   @keyframes blink {
@@ -132,9 +131,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50"> 
-      {/* NOTA: Se agrega la barra de navegación aquí para asegurar que sea responsiva. */}
-      <DashboardNavbar />
+    <div className="min-h-screen bg-gray-50">
       <style>{styles}</style>
       <div className="max-w-7xl mx-auto px-4">
         <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-lg p-8 text-white mb-8">
