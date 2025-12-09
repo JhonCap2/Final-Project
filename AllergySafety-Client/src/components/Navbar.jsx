@@ -7,9 +7,9 @@ export default function Navbar({ onLogout }) {
 
   const navLinks = [
     { to: '/dashboard', text: 'Dashboard' },
-    { to: '/profile', text: 'Mi Perfil' },
-    { to: '/allergies', text: 'Mis Alergias' },
-    { to: '/contacts', text: 'Contactos' },
+    { to: '/profile', text: 'My profile' },
+    { to: '/allergies', text: 'Allergies' },
+    { to: '/contacts', text: 'Contact' },
     { to: '/history', text: 'History' },
   ];
 
