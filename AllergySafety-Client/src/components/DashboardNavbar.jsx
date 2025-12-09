@@ -27,10 +27,8 @@ export default function DashboardNavbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              {/* Asume que tienes un logo en la carpeta public, como logo.jpg */}
+            <Link to="/dashboard" className="flex items-center">
               <img className="h-8 w-auto" src="/logo.jpg" alt="AllergySafety Logo" />
-              <span className="text-xl font-bold text-gray-800">AllergySafety</span>
             </Link>
           </div>
 
