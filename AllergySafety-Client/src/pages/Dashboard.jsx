@@ -131,7 +131,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50">
       <style>{styles}</style>
       <div className="max-w-7xl mx-auto px-4">
         <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-lg p-8 text-white mb-8">
