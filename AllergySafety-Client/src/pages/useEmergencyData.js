@@ -26,18 +26,17 @@ export const useEmergencyData = (token) => {
         const userRes = await API.get('/users/profile');
         const contactsRes = await API.get('/contacts');
         // Asumiendo que el historial de alergias y SOS se obtienen de endpoints separados
-        // Si no existen, necesitarás crearlos en el backend o ajustar esta lógica. (Temporalmente comentados)
-        // const historyRes = await API.get('/allergies/history'); 
-        // const sosHistoryRes = await API.get('/sos/history'); 
+        const sosHistoryRes = await API.get('/sos/history'); // <-- ¡Activamos esta línea!
+        // const historyRes = await API.get('/allergies/history'); // Esta ruta aún no existe
 
         setUserData({
           ...userRes.data.user,
           allergies: userRes.data.user.allergies || [],
           medications: userRes.data.user.medications || [],
-          allergyHistory: [], // Valor por defecto mientras no hay endpoint
+          allergyHistory: [], // Mantenemos esto por ahora
         });
         setEmergencyContacts(contactsRes.data.contacts || []);
-        setSosHistory([]); // Valor por defecto mientras no hay endpoint
+        setSosHistory(sosHistoryRes.data.history || []); // Usamos los datos de la API
       } catch (error) {
         console.error('Error fetching initial data:', error);
         toast.error('Failed to load user data.');
@@ -169,8 +168,11 @@ export const useEmergencyData = (token) => {
     try {
       const res = await API.post('/sos');
       toast.success(res.data.message || 'SOS alert sent successfully!');
-      // Opcionalmente, actualiza el historial de SOS
-      setSosHistory((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString(), status: 'Activated' }]);
+      
+      // Actualiza el historial de SOS desde la API para tener el registro real
+      const updatedHistoryRes = await API.get('/sos/history');
+      setSosHistory(updatedHistoryRes.data.history || []);
+
       return true;
     } catch (error) {
       console.error('Error sending SOS alert:', error);

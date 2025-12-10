@@ -2,6 +2,7 @@ import { Router } from "express";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
 import User from "../models/User.js"; // This is correct
+import SOS from "../models/SOS.js"; // Importa el nuevo modelo SOS
 import { protect } from "../middleware/auth.js"; // This is the correct middleware for your app
 
 // Solo inicializa Twilio si las credenciales están presentes
@@ -154,10 +155,35 @@ router.post("/sos", protect, async (req, res, next) => { // Using the correct 'p
       responseMessage += ` Skipped: ${smsSkippedCount} SMS, ${emailSkippedCount} emails (missing contact info).`;
     }
 
+    // 3. Guardar la alerta en el historial de la base de datos
+    try {
+      const alertStatus = (smsFailedCount > 0 || emailFailedCount > 0) ? 'Partial' : 'Sent';
+      const sosRecord = new SOS({
+        user: user._id,
+        status: alertStatus,
+      });
+      await sosRecord.save();
+      console.log(`[DB] SOS alert for user ${user.fullName} saved to history.`);
+    } catch (dbError) {
+      console.error("[ERROR] Failed to save SOS alert to history:", dbError);
+      // No detenemos la respuesta al usuario por esto, pero lo registramos.
+    }
+
     res.status(200).json({ message: responseMessage });
   } catch (error) {
     console.error("[ERROR] Error processing SOS alert:", error);
     next(error); // Pasa el error al manejador de errores global
+  }
+});
+
+// Nueva ruta para obtener el historial de SOS del usuario
+router.get("/sos/history", protect, async (req, res, next) => {
+  try {
+    const history = await SOS.find({ user: req.user.id }).sort({ timestamp: -1 });
+    res.status(200).json({ history });
+  } catch (error) {
+    console.error("[ERROR] Could not fetch SOS history:", error);
+    next(error);
   }
 });
 
