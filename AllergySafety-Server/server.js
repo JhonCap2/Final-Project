@@ -8,7 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import allergyRoutes from './routes/allergy.routes.js';
 import contactRoutes from './routes/contact.routes.js';
-import sosRoutes from './routes/sos.routes.js'; // Importa las rutas del SOS
+import sosRoutes from './routes/sos.routes.js'; 
 import requestLogger from './middleware/requestLogger.js';
 
 // Load environment variables
@@ -53,8 +53,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
-// --- SERVE FRONTEND IN PRODUCTION ---
-// Este bloque debe ir DESPUÉS de las rutas de la API pero ANTES de los manejadores de errores.
 if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -62,8 +60,7 @@ if (process.env.NODE_ENV === 'production') {
   // Sirve los archivos estáticos del build de React
   app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
 
-  // Para cualquier otra ruta que no sea de la API, sirve el index.html principal de React.
-  // Esto permite que el enrutamiento del lado del cliente (React Router) funcione.
+  // Para cualquier otra ruta, sirve el index.html principal de React
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
   });
@@ -72,16 +69,21 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/', (req, res) => res.send('API is running in development mode...'));
 }
 
-// 404 handler
+// 404 handler - Debe ir después de las rutas de la API y del frontend
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
 });
 
-// Error handling middleware
+// Error handling middleware - Debe ser el último middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  // Evita enviar el stack de errores en producción por seguridad
+  const errorDetails = process.env.NODE_ENV === 'production' 
+    ? { message: 'Internal Server Error' }
+    : { message: err.message, stack: err.stack };
+
   res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
+    ...errorDetails,
     status: err.status || 500
   });
 });
