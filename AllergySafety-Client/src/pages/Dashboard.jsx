@@ -37,7 +37,7 @@ export default function Dashboard() {
   const token = localStorage.getItem('token')
 
   // Usar el hook personalizado para manejar la lógica de datos
-  const { loading, userData, setUserData, emergencyContacts, addContact, deleteContact, addAllergy, deleteAllergy, addMedication, deleteMedication, recordSOSAlert } = useEmergencyData(token);
+  const { loading, userData, setUserData, emergencyContacts, addContact, deleteContact, addAllergy, deleteAllergy, addMedication, deleteMedication, sosHistory, sosTotal, recordSOSAlert } = useEmergencyData(token);
 
   const [newContact, setNewContact] = useState({ name: "", phone: "", relationship: "", email: "", bloodType: "" })
   const [newAllergy, setNewAllergy] = useState({ name: "", severity: "Moderate" })
@@ -168,9 +168,23 @@ export default function Dashboard() {
             <p className="text-2xl font-bold text-gray-800">{userData.medications.length}</p>
             <button onClick={() => setActiveModal('meds')} className="text-red-600 text-xs mt-2 font-semibold hover:underline">{userData.medications.length === 0 ? "Add Now" : "View/Add"}</button>
           </div>
-        </div>
+        </div>
 
-        <button onClick={() => setActiveModal('sos')} className={`w-full py-4 text-white font-bold text-2xl rounded-2xl shadow-2xl flex items-center justify-center gap-4 ${sosActive ? "bg-red-600 animate-pulse" : "bg-red-500 hover:bg-red-600"}`}>
+        {/* SOS Alerts Summary */}
+        <div className="mt-6">
+          <div className="bg-white rounded-lg shadow p-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">SOS Alerts Sent</p>
+              <p className="text-2xl font-bold text-red-600">{typeof sosTotal === 'number' ? sosTotal : 0}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Recent</p>
+              <p className="text-sm text-gray-700">{sosHistory && sosHistory.length > 0 ? new Date(sosHistory[0].timestamp).toLocaleString() : 'No alerts yet'}</p>
+            </div>
+          </div>
+        </div>
+
+        <button onClick={() => setActiveModal('sos')} className={`w-full py-4 text-white font-bold text-2xl rounded-2xl shadow-2xl flex items-center justify-center gap-4 ${sosActive ? "bg-red-600 animate-pulse" : "bg-red-500 hover:bg-red-600"}`}>
           <FaBell className="text-2xl ambulance-blink" /> {/* Esta animación es para el botón mismo */}
           {sosActive ? "SOS ACTIVATED!" : "ACTIVATE SOS"}
         </button>

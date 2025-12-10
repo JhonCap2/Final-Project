@@ -14,6 +14,7 @@ export const useEmergencyData = (token) => {
   });
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [sosHistory, setSosHistory] = useState([]);
+  const [sosTotal, setSosTotal] = useState(0);
 
   // Función para cargar los datos iniciales del usuario
   useEffect(() => {
@@ -36,6 +37,7 @@ export const useEmergencyData = (token) => {
         });
         setEmergencyContacts(contactsRes.data.contacts || []);
         setSosHistory(sosHistoryRes.data.history || []);
+        setSosTotal(sosHistoryRes.data.total || 0);
       } catch (error) {
         console.error('Error fetching initial data:', error);
         toast.error('Failed to load user data.');
@@ -171,6 +173,7 @@ export const useEmergencyData = (token) => {
       // Vuelve a cargar el historial para mostrar la nueva alerta inmediatamente
       const updatedHistoryRes = await API.get('/sos/history');
       setSosHistory(updatedHistoryRes.data.history || []);
+      setSosTotal(updatedHistoryRes.data.total || 0);
 
       return true;
     } catch (error) {
@@ -187,6 +190,7 @@ export const useEmergencyData = (token) => {
     emergencyContacts,
     setEmergencyContacts, 
     sosHistory,
+    sosTotal,
     addContact,
     deleteContact,
     addAllergy,

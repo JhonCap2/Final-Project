@@ -33,7 +33,8 @@ if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PAS
 const router = Router();
 
 // Esta es la ruta que el frontend llama cuando se activa el SOS
-router.post("/sos", protect, async (req, res, next) => { // Using the correct 'protect' middleware
+// POST / -> activate SOS for authenticated user
+router.post("/", protect, async (req, res, next) => {
   if (!twilioClient && !transporter) {
     console.error("[ERROR] SOS activated, but neither Twilio nor Email are configured. Cannot send any notifications.");
     return res.status(500).json({ message: "SOS recorded, but no notification methods configured. Please check server configuration." });
@@ -41,7 +42,9 @@ router.post("/sos", protect, async (req, res, next) => { // Using the correct 'p
 
   try {
     // 1. Obtener el usuario y sus contactos de emergencia
-    const user = await User.findById(req.user.id).populate('emergencyContacts'); // 'req.user.id' es correcto con 'protect'
+    // note: auth middleware sets req.user.userId (see auth.controller.generateToken)
+    const userId = req.user?.userId || req.user?.id;
+    const user = await User.findById(userId).populate('emergencyContacts');
     
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -177,10 +180,13 @@ router.post("/sos", protect, async (req, res, next) => { // Using the correct 'p
 });
 
 // Nueva ruta para obtener el historial de SOS del usuario
-router.get("/sos/history", protect, async (req, res, next) => {
+// GET /history -> get SOS history for authenticated user
+router.get("/history", protect, async (req, res, next) => {
   try {
-    const history = await SOS.find({ user: req.user.id }).sort({ timestamp: -1 });
-    res.status(200).json({ history });
+    const userId = req.user?.userId || req.user?.id;
+    const history = await SOS.find({ user: userId }).sort({ timestamp: -1 });
+    const total = await SOS.countDocuments({ user: userId });
+    res.status(200).json({ history, total });
   } catch (error) {
     console.error("[ERROR] Could not fetch SOS history:", error);
     next(error);
