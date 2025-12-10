@@ -2,7 +2,7 @@ import { Router } from "express";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
 import User from "../models/User.js"; // This is correct
-import SOS from "../models/SOS.js"; // Importa el nuevo modelo SOS
+import SOS from "../models/SOS.js";
 import { protect } from "../middleware/auth.js"; // This is the correct middleware for your app
 
 // Solo inicializa Twilio si las credenciales están presentes
