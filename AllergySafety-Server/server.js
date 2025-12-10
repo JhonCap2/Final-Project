@@ -53,6 +53,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
+// --- SERVE FRONTEND IN PRODUCTION ---
+// Este bloque debe ir DESPUÉS de las rutas de la API pero ANTES de los manejadores de errores.
+if (process.env.NODE_ENV === 'production') {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  // Sirve los archivos estáticos del build de React
+  app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
+
+  // Para cualquier otra ruta que no sea de la API, sirve el index.html principal de React.
+  // Esto permite que el enrutamiento del lado del cliente (React Router) funcione.
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
+  });
+} else {
+  // En desarrollo, solo confirma que la API está corriendo.
+  app.get('/', (req, res) => res.send('API is running in development mode...'));
+}
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
@@ -66,25 +85,6 @@ app.use((err, req, res, next) => {
     status: err.status || 500
   });
 });
-
-// --- SERVE FRONTEND IN PRODUCTION ---
-// Este bloque debe ir al FINAL, justo antes de app.listen().
-// Atrapa cualquier petición que no haya coincidido con una ruta de la API y sirve el frontend.
-if (process.env.NODE_ENV === 'production') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  // Sirve los archivos estáticos del build de React
-  app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
-
-  // Para cualquier otra ruta, sirve el index.html principal de React
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
-  });
-} else {
-  // En desarrollo, solo confirma que la API está corriendo.
-  app.get('/', (req, res) => res.send('API is running in development mode...'));
-}
 
 // Start server
 app.listen(PORT, () => {
