@@ -7,7 +7,8 @@ import { protect } from "../middleware/auth.js";
 // Solo inicializa Twilio si las credenciales están presentes
 let twilioClient;
 if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  // Correctamente inicializado con la sintaxis de ES Modules
+  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN); 
   console.log("[✓] Twilio client initialized.");
 } else {
   console.warn("[ADVERTENCIA] Twilio credentials not found. SMS sending will be disabled.");
@@ -31,7 +32,7 @@ if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PAS
 const router = Router();
 
 // Esta es la ruta que el frontend llama cuando se activa el SOS
-router.post("/sos", protect, async (req, res) => {
+router.post("/sos", protect, async (req, res, next) => {
   if (!twilioClient && !transporter) {
     console.error("[ERROR] SOS activated, but neither Twilio nor Email are configured. Cannot send any notifications.");
     return res.status(500).json({ message: "SOS recorded, but no notification methods configured. Please check server configuration." });
@@ -156,7 +157,7 @@ router.post("/sos", protect, async (req, res) => {
     res.status(200).json({ message: responseMessage });
   } catch (error) {
     console.error("[ERROR] Error processing SOS alert:", error);
-    res.status(500).json({ message: "Failed to process SOS alert due to an internal server error." });
+    next(error); // Pasa el error al manejador de errores global
   }
 });
 
