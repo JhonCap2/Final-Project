@@ -1,8 +1,8 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
-import User from "../models/User.js";
-import { protect } from "../middleware/auth.js";
+import User from "../models/User.js"; // Correcto, apunta a User.js
+import isAuthenticated from "../middleware/isAuthenticated.js"; // Corregido: usa el middleware correcto
 
 // Solo inicializa Twilio si las credenciales están presentes
 let twilioClient;
@@ -32,7 +32,7 @@ if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PAS
 const router = Router();
 
 // Esta es la ruta que el frontend llama cuando se activa el SOS
-router.post("/sos", protect, async (req, res, next) => {
+router.post("/sos", isAuthenticated, async (req, res, next) => {
   if (!twilioClient && !transporter) {
     console.error("[ERROR] SOS activated, but neither Twilio nor Email are configured. Cannot send any notifications.");
     return res.status(500).json({ message: "SOS recorded, but no notification methods configured. Please check server configuration." });
@@ -40,7 +40,7 @@ router.post("/sos", protect, async (req, res, next) => {
 
   try {
     // 1. Obtener el usuario y sus contactos de emergencia
-    const user = await User.findById(req.user._id).populate('emergencyContacts');
+    const user = await User.findById(req.user.id).populate('emergencyContacts');
     
     if (!user) {
       return res.status(404).json({ message: "User not found." });
