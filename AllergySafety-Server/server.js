@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import allergyRoutes from './routes/allergy.routes.js';
 import contactRoutes from './routes/contact.routes.js';
+import sosRoutes from '../sos.routes.js'; // Importa las rutas del SOS
 import requestLogger from './middleware/requestLogger.js';
 
 // Load environment variables
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);        // <- nota: "users" plural
 app.use('/api/allergies', allergyRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api', sosRoutes); // Registra las rutas del SOS
 
 // Health check route
 app.get('/api/health', (req, res) => {
