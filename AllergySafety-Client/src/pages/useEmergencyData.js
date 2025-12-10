@@ -26,18 +26,18 @@ export const useEmergencyData = (token) => {
         const userRes = await API.get('/users/profile');
         const contactsRes = await API.get('/contacts');
         // Asumiendo que el historial de alergias y SOS se obtienen de endpoints separados
-        // Si no existen, necesitarás crearlos en el backend o ajustar esta lógica.
-        const historyRes = await API.get('/allergies/history'); 
-        const sosHistoryRes = await API.get('/sos/history'); 
+        // Si no existen, necesitarás crearlos en el backend o ajustar esta lógica. (Temporalmente comentados)
+        // const historyRes = await API.get('/allergies/history'); 
+        // const sosHistoryRes = await API.get('/sos/history'); 
 
         setUserData({
           ...userRes.data.user,
           allergies: userRes.data.user.allergies || [],
           medications: userRes.data.user.medications || [],
-          allergyHistory: historyRes.data.history || [], 
+          allergyHistory: [], // Valor por defecto mientras no hay endpoint
         });
         setEmergencyContacts(contactsRes.data.contacts || []);
-        setSosHistory(sosHistoryRes.data.sosHistory || []); 
+        setSosHistory([]); // Valor por defecto mientras no hay endpoint
       } catch (error) {
         console.error('Error fetching initial data:', error);
         toast.error('Failed to load user data.');
