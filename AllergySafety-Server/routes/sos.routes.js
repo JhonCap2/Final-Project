@@ -1,7 +1,7 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
-import User from "../models/user.model.js";
+import User from "../models/User.model.js";
 import { protect } from "../middleware/auth.js";
 
 // Solo inicializa Twilio si las credenciales están presentes
