@@ -53,8 +53,22 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error',
+    status: err.status || 500
+  });
+});
+
 // --- SERVE FRONTEND IN PRODUCTION ---
-// This block must come AFTER API routes but BEFORE the 404 handler.
+// This block must come AFTER all API routes and error handlers (except the final server listen).
 if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -71,20 +85,6 @@ if (process.env.NODE_ENV === 'production') {
   // In development, just confirm the API is running.
   app.get('/', (req, res) => res.send('API is running in development mode...'));
 }
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-    status: err.status || 500
-  });
-});
 
 // Start server
 app.listen(PORT, () => {
