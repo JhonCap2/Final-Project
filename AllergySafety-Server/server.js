@@ -53,25 +53,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
-// --- DEBUG: Log the NODE_ENV value ---
-console.log(`Current NODE_ENV: '${process.env.NODE_ENV}'`);
-
-// --- SERVE FRONTEND IN PRODUCTION ---
-if (process.env.NODE_ENV === 'production') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  // Set static folder
-  app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
-
-  // For any route that is not an API route, send the index.html from the client build
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => res.send('API is running in development mode...'));
-}
-
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
@@ -85,6 +66,25 @@ app.use((err, req, res, next) => {
     status: err.status || 500
   });
 });
+
+// --- SERVE FRONTEND IN PRODUCTION ---
+// This block should come AFTER API routes and BEFORE the final server listen.
+if (process.env.NODE_ENV === 'production') {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  // Set static folder for the client build
+  app.use(express.static(path.join(__dirname, '../AllergySafety-Client/dist')));
+
+  // For any route that is not an API route, send the index.html from the client build
+  // This is a "catch-all" handler for client-side routing.
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../AllergySafety-Client/dist', 'index.html'));
+  });
+} else {
+  // In development, just confirm the API is running.
+  app.get('/', (req, res) => res.send('API is running in development mode...'));
+}
 
 // Start server
 app.listen(PORT, () => {
