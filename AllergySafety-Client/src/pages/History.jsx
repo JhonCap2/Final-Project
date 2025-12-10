@@ -97,8 +97,8 @@ export default function History() {
           {historyData.sosAlerts.length > 0 ? (
             <div className="space-y-3">
               {historyData.sosAlerts.map(alert => (
-                <div key={alert.id} className="bg-red-50 p-4 rounded border-l-4 border-red-500">
-                  <p className="font-semibold text-red-700">{alert.timestamp}</p>
+                <div key={alert._id} className="bg-red-50 p-4 rounded border-l-4 border-red-500">
+                  <p className="font-semibold text-red-700">{new Date(alert.timestamp).toLocaleString()}</p>
                   <p className="text-gray-600">Status: {alert.status}</p>
                 </div>
               ))}
