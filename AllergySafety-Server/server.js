@@ -8,7 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import allergyRoutes from './routes/allergy.routes.js';
 import contactRoutes from './routes/contact.routes.js';
-import sosRoutes from '../sos.routes.js'; // Importa las rutas del SOS
+import sosRoutes from './routes/sos.routes.js'; // Importa las rutas del SOS
 import requestLogger from './middleware/requestLogger.js';
 
 // Load environment variables
