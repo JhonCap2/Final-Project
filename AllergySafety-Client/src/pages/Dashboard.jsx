@@ -44,10 +44,14 @@ export default function Dashboard() {
   const [newMedication, setNewMedication] = useState({ name: "", usage: "" })
 
   const handleSOS = async () => {
-    setSOSActive(true)
-    setActiveModal('rescue')
-    await recordSOSAlert(); // Registra el evento SOS
-    setTimeout(() => setSOSActive(false), 3000)
+    // Esta función ahora solo muestra el modal de confirmación
+    setActiveModal('sos');
+  }
+
+  const confirmSOSActivation = async () => {
+    setSOSActive(true); // Activa la animación del botón principal
+    setActiveModal('rescue'); // Muestra el modal de "Rescue Mode Active"
+    await recordSOSAlert(); // Dispara la llamada a la API para enviar la alerta SOS
   }
   
 // --- CRUD Contactos ---
@@ -167,7 +171,7 @@ export default function Dashboard() {
         </div>
 
         <button onClick={() => setActiveModal('sos')} className={`w-full py-4 text-white font-bold text-2xl rounded-2xl shadow-2xl flex items-center justify-center gap-4 ${sosActive ? "bg-red-600 animate-pulse" : "bg-red-500 hover:bg-red-600"}`}>
-          <FaBell className="text-2xl ambulance-blink" />
+          <FaBell className="text-2xl ambulance-blink" /> {/* Esta animación es para el botón mismo */}
           {sosActive ? "SOS ACTIVATED!" : "ACTIVATE SOS"}
         </button>
 
@@ -189,7 +193,7 @@ export default function Dashboard() {
               <p className="text-gray-700 mb-6">Are you sure you want to activate the emergency signal and send your information to paramedics and contacts?</p>
               <div className="flex gap-4">
                 <button onClick={() => setActiveModal(null)} className="flex-1 bg-gray-300 py-3 rounded-lg font-bold hover:bg-gray-400 transition">Cancel</button>
-                <button onClick={handleSOS} className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition">Activate SOS</button>
+                <button onClick={confirmSOSActivation} className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition">Activate SOS</button>
               </div>
             </div>
             

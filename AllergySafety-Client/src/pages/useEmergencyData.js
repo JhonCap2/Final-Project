@@ -1,231 +1,197 @@
-import { useState, useEffect, useCallback } from 'react';
-import API from '../../axios'; // Usar la instancia configurada de Axios
+import { useState, useEffect } from 'react';
+import API from '../../axios'; // Asegúrate de que esta ruta sea correcta para tu instancia de axios
 import { toast } from 'react-toastify';
 
-export function useEmergencyData(token) {
-  const [userData, setUserData] = useState({ fullName: "", bloodType: "", medications: [], medicalConditions: [], allergies: [] });
-  const [emergencyContacts, setEmergencyContacts] = useState(() => {
-    try {
-      const data = localStorage.getItem("emergencyContacts");
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  });
+export const useEmergencyData = (token) => {
   const [loading, setLoading] = useState(true);
-  const [sosHistory, setSosHistory] = useState(() => {
-    try {
-      const data = localStorage.getItem("sosHistory");
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+  const [userData, setUserData] = useState({
+    fullName: '',
+    bloodType: '',
+    allergies: [],
+    medications: [],
+    emergencyContacts: [],
+    allergyHistory: [],
   });
+  const [emergencyContacts, setEmergencyContacts] = useState([]);
+  const [sosHistory, setSosHistory] = useState([]);
 
-  // --- DATA FETCHING ---
+  // Función para cargar los datos iniciales del usuario
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
+    const fetchUserData = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
-        const localUserData = localStorage.getItem("userMedicalData");
-        if (localUserData) setUserData(JSON.parse(localUserData));
-      } catch { /* Ignorar error */ }
-      return;
-    }
-    
-    const controller = new AbortController();
-    const config = { signal: controller.signal };
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [profileRes, contactsRes, allergiesRes] = await Promise.all([
-          API.get('/users/profile', config),
-          API.get('/contacts', config),
-          API.get('/allergies', config)
-        ]);
-
-        const user = profileRes.data.user;
-        const contacts = Array.isArray(contactsRes.data.contacts) ? contactsRes.data.contacts : [];
-        const serverAllergies = Array.isArray(allergiesRes.data.allergies) ? allergiesRes.data.allergies.map(a => ({
-          _id: a._id,
-          name: a.allergen,
-          severity: a.severity ? a.severity.toLowerCase() : 'moderate',
-          reaction: a.reactions || ''
-        })) : [];
+        const userRes = await API.get('/users/profile');
+        const contactsRes = await API.get('/contacts');
+        // Asumiendo que el historial de alergias y SOS se obtienen de endpoints separados
+        // Si no existen, necesitarás crearlos en el backend o ajustar esta lógica.
+        const historyRes = await API.get('/allergies/history'); 
+        const sosHistoryRes = await API.get('/sos/history'); 
 
         setUserData({
-          fullName: user.fullName || '',
-          bloodType: user.bloodType || '',
-          medicalConditions: user.medicalConditions || [],
-          medications: user.medications || [],
-          allergies: serverAllergies
+          ...userRes.data.user,
+          allergies: userRes.data.user.allergies || [],
+          medications: userRes.data.user.medications || [],
+          allergyHistory: historyRes.data.history || [], 
         });
-        setEmergencyContacts(contacts);
-
-      } catch (err) {
-        if (err.name === 'CanceledError') {
-          console.log('Request canceled:', err.message);
-        } else {
-          console.error('Failed to fetch initial data', err);
-          toast.error('Failed to load data from server. Some data may be from local cache.');
-        }
+        setEmergencyContacts(contactsRes.data.contacts || []);
+        setSosHistory(sosHistoryRes.data.sosHistory || []); 
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+        toast.error('Failed to load user data.');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
-
-    return () => {
-      controller.abort();
-    };
+    fetchUserData();
   }, [token]);
 
-  // --- LOCAL STORAGE PERSISTENCE ---
-  useEffect(() => {
-    localStorage.setItem("emergencyContacts", JSON.stringify(emergencyContacts || []));
-  }, [emergencyContacts]);
-
-  useEffect(() => {
+  // --- Funciones CRUD para Contactos ---
+  const addContact = async (contactData) => {
     if (!token) {
-      localStorage.setItem("userMedicalData", JSON.stringify(userData));
+      toast.info('Please log in to add contacts.');
+      return false;
     }
-  }, [userData, token]);
-
-  useEffect(() => {
-    localStorage.setItem("sosHistory", JSON.stringify(sosHistory || []));
-  }, [sosHistory]);
-
-  // --- CRUD Functions ---
-
-  const addContact = useCallback(async (newContact) => {
-    if (token) {
-      try {
-        const res = await API.post('/contacts', newContact, { signal: AbortSignal.timeout(5000) });
-        const contact = res.data.contact;
-        setEmergencyContacts(prev => [contact, ...(prev || [])]);
-        toast.success('Emergency contact saved to server');
-        return true; // Success
-      } catch (err) {
-        console.error('Create contact failed', err);
-        toast.error('Failed to save contact to server.');
-        return false; // Failure
-      }
-    } else {
-      setEmergencyContacts(prev => [{ id: Date.now(), ...newContact }, ...(prev || [])]);
-      toast.info('Added contact locally. Log in to persist');
-      return true; // Success (local)
-    }
-  }, [token]);
-
-  const deleteContact = useCallback(async (id) => {
-    const contact = (emergencyContacts || []).find(c => (c._id || c.id) === id);
-    if (contact && contact._id && token) {
-      try {
-        await API.delete(`/contacts/${contact._id}`, { signal: AbortSignal.timeout(5000) });
-        setEmergencyContacts(prev => (prev || []).filter(c => (c._id || c.id) !== contact._id));
-        toast.success('Contact deleted from server');
-      } catch (err) {
-        console.error('Delete contact failed', err);
-        toast.error('Failed to delete from server');
-      }
-    } else {
-      setEmergencyContacts(prev => (prev || []).filter(c => (c._id || c.id) !== id));
-      toast.info('Contact deleted locally');
-    }
-  }, [token, emergencyContacts]);
-
-  const addAllergy = useCallback(async (newAllergy) => {
-    const severityServer = newAllergy.severity.charAt(0).toUpperCase() + newAllergy.severity.slice(1);
-    if (token) {
-      try {
-        const res = await API.post('/allergies', { allergen: newAllergy.name, severity: severityServer }, { signal: AbortSignal.timeout(5000) });
-        const a = res.data.allergy;
-        const clientAllergy = { _id: a._id, name: a.allergen, severity: (a.severity || severityServer).toLowerCase(), reaction: a.reactions || '' };
-        setUserData(prev => ({ ...prev, allergies: [clientAllergy, ...(prev.allergies || [])] }));
-        toast.success('Allergy saved to server');
-        return true;
-      } catch (err) {
-        console.error('Create allergy failed', err);
-        toast.error('Failed to save allergy to server.');
-        return false;
-      }
-    } else {
-      setUserData(prev => ({ ...prev, allergies: [{ id: Date.now(), ...newAllergy }, ...(prev.allergies || [])] }));
-      toast.info('Added allergy locally. Log in to persist');
+    try {
+      const res = await API.post('/contacts', contactData);
+      setEmergencyContacts((prev) => [...prev, res.data.contact]);
+      toast.success('Contact added successfully!');
       return true;
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      toast.error('Failed to add contact.');
+      return false;
     }
-  }, [token]);
-
-  const deleteAllergy = useCallback(async (id) => {
-    const allergy = (userData.allergies || []).find(a => (a._id || a.id) === id);
-    if (allergy && allergy._id && token) {
-      try {
-        await API.delete(`/allergies/${allergy._id}`, { signal: AbortSignal.timeout(5000) });
-        setUserData(prev => ({ ...prev, allergies: (prev.allergies || []).filter(a => (a._id || a.id) !== allergy._id) }));
-        toast.success('Allergy deleted from server');
-      } catch (err) {
-        console.error('Delete allergy failed', err);
-        toast.error('Failed to delete allergy from server.');
-      }
-    } else {
-      setUserData(prev => ({ ...prev, allergies: (prev.allergies || []).filter(a => (a._id || a.id) !== id) }));
-      toast.info('Allergy deleted locally');
-    }
-  }, [token, userData.allergies]);
-
-  const addMedication = useCallback(async (newMedication) => {
-    setUserData(prev => ({
-      ...prev,
-      medications: [{ id: Date.now(), ...newMedication }, ...(prev.medications || [])]
-    }));
-    toast.info('Medication added locally. Save on your Profile page to persist.');
-    return true;
-  }, []);
-
-  const deleteMedication = useCallback(async (id) => {
-    setUserData(prev => ({
-      ...prev,
-      medications: (prev.medications || []).filter(m => (m.id || m._id) !== id)
-    }));
-    toast.info('Medication removed locally.');
-  }, []);
-
-  const addIncident = useCallback(async (newIncident) => {
-    setUserData(prev => ({
-      ...prev,
-      allergyHistory: [newIncident, ...(prev.allergyHistory || [])]
-    }));
-    toast.success('Allergy incident recorded.');
-    return true;
-  }, []);
-
-  const deleteIncident = useCallback(async (incidentDate) => {
-    setUserData(prev => ({
-      ...prev,
-      allergyHistory: (prev.allergyHistory || []).filter(inc => inc.date !== incidentDate)
-    }));
-    toast.info('Incident removed.');
-  }, []);
-
-  const recordSOSAlert = useCallback(async () => {
-    const newAlert = {
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      status: 'Activated'
-    };
-    setSosHistory(prev => [newAlert, ...(prev || [])]);
-    toast.warning('🚨 SOS Alert Recorded in History!');
-    return true;
-  }, []);
-
-  return { 
-    loading, userData, setUserData, 
-    emergencyContacts, setEmergencyContacts, addContact, deleteContact, 
-    addAllergy, deleteAllergy,
-    addMedication, deleteMedication,
-    addIncident, deleteIncident,
-    sosHistory, recordSOSAlert
   };
-}
+
+  const deleteContact = async (contactId) => {
+    if (!token) {
+      toast.info('Please log in to delete contacts.');
+      return false;
+    }
+    try {
+      await API.delete(`/contacts/${contactId}`);
+      setEmergencyContacts((prev) => prev.filter((c) => c._id !== contactId));
+      toast.success('Contact deleted successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      toast.error('Failed to delete contact.');
+      return false;
+    }
+  };
+
+  // --- Funciones CRUD para Alergias ---
+  const addAllergy = async (allergyData) => {
+    if (!token) {
+      toast.info('Please log in to add allergies.');
+      return false;
+    }
+    try {
+      const res = await API.post('/allergies', allergyData);
+      setUserData((prev) => ({ ...prev, allergies: [...prev.allergies, res.data.allergy] }));
+      toast.success('Allergy added successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error adding allergy:', error);
+      toast.error('Failed to add allergy.');
+      return false;
+    }
+  };
+
+  const deleteAllergy = async (allergyId) => {
+    if (!token) {
+      toast.info('Please log in to delete allergies.');
+      return false;
+    }
+    try {
+      await API.delete(`/allergies/${allergyId}`);
+      setUserData((prev) => ({ ...prev, allergies: prev.allergies.filter((a) => a._id !== allergyId) }));
+      toast.success('Allergy deleted successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error deleting allergy:', error);
+      toast.error('Failed to delete allergy.');
+      return false;
+    }
+  };
+
+  // --- Funciones CRUD para Medicamentos ---
+  const addMedication = async (medicationData) => {
+    if (!token) {
+      toast.info('Please log in to add medications.');
+      return false;
+    }
+    try {
+      const updatedMedications = [...userData.medications, medicationData];
+      const res = await API.put('/users/profile', { medications: updatedMedications }); // Asumiendo que se actualiza via perfil
+      setUserData((prev) => ({ ...prev, medications: res.data.user.medications }));
+      toast.success('Medication added successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error adding medication:', error);
+      toast.error('Failed to add medication.');
+      return false;
+    }
+  };
+
+  const deleteMedication = async (medicationId) => {
+    if (!token) {
+      toast.info('Please log in to delete medications.');
+      return false;
+    }
+    try {
+      const updatedMedications = userData.medications.filter((m) => m._id !== medicationId);
+      const res = await API.put('/users/profile', { medications: updatedMedications }); // Asumiendo que se actualiza via perfil
+      setUserData((prev) => ({ ...prev, medications: res.data.user.medications }));
+      toast.success('Medication deleted successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error deleting medication:', error);
+      toast.error('Failed to delete medication.');
+      return false;
+    }
+  };
+
+  // --- Función para activar el SOS ---
+  const recordSOSAlert = async () => {
+    if (!token) {
+      toast.error('You must be logged in to activate SOS.');
+      return false;
+    }
+    if (emergencyContacts.length === 0) {
+      toast.warn('No emergency contacts configured. Please add contacts first.');
+      return false;
+    }
+
+    try {
+      const res = await API.post('/sos');
+      toast.success(res.data.message || 'SOS alert sent successfully!');
+      // Opcionalmente, actualiza el historial de SOS
+      setSosHistory((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString(), status: 'Activated' }]);
+      return true;
+    } catch (error) {
+      console.error('Error sending SOS alert:', error);
+      toast.error(error.response?.data?.message || 'Failed to send SOS alert.');
+      return false;
+    }
+  };
+
+  return {
+    loading,
+    userData,
+    setUserData,
+    emergencyContacts,
+    setEmergencyContacts, 
+    sosHistory,
+    addContact,
+    deleteContact,
+    addAllergy,
+    deleteAllergy,
+    addMedication,
+    deleteMedication,
+    recordSOSAlert,
+  };
+};
