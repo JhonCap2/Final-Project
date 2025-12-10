@@ -1,5 +1,8 @@
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import API from '../../axios'
 
 export default function History() {
   const [historyData, setHistoryData] = useState({
@@ -8,6 +11,8 @@ export default function History() {
     contacts: [],
     sosAlerts: []
   })
+  const [loading, setLoading] = useState(false)
+  const token = localStorage.getItem('token')
 
   useEffect(() => {
     // Load data from localStorage
@@ -15,30 +20,61 @@ export default function History() {
       const userData = JSON.parse(localStorage.getItem('userMedicalData')) || {}
       const contacts = JSON.parse(localStorage.getItem('emergencyContacts')) || []
       
-      setHistoryData({
-        allergies: userData.allergies || [],
-        medications: userData.medications || [],
-        contacts: contacts || [],
-        sosAlerts: JSON.parse(localStorage.getItem('sosHistory')) || []
-      })
+      // Try to fetch SOS history from API if logged in
+      if (token) {
+        API.get('/sos/history')
+          .then(res => {
+            setHistoryData({
+              allergies: userData.allergies || [],
+              medications: userData.medications || [],
+              contacts: contacts || [],
+              sosAlerts: res.data.history || []
+            })
+          })
+          .catch(err => {
+            console.error('Failed to fetch SOS history:', err)
+            // Fallback to localStorage
+            setHistoryData({
+              allergies: userData.allergies || [],
+              medications: userData.medications || [],
+              contacts: contacts || [],
+              sosAlerts: JSON.parse(localStorage.getItem('sosHistory')) || []
+            })
+          })
+      } else {
+        // Use localStorage if not logged in
+        setHistoryData({
+          allergies: userData.allergies || [],
+          medications: userData.medications || [],
+          contacts: contacts || [],
+          sosAlerts: JSON.parse(localStorage.getItem('sosHistory')) || []
+        })
+      }
     } catch (err) {
       console.log('Error loading history:', err)
     }
-  }, [])
+  }, [token])
 
-  const recordSOS = () => {
-    const newAlert = {
-      id: Date.now(),
-      timestamp: new Date().toLocaleString(),
-      status: 'Activated'
+  const recordSOS = async () => {
+    if (!token) {
+      toast.error('You must be logged in to record an SOS alert')
+      return
     }
-    const sosHistory = JSON.parse(localStorage.getItem('sosHistory')) || []
-    sosHistory.push(newAlert)
-    localStorage.setItem('sosHistory', JSON.stringify(sosHistory))
-    setHistoryData(prev => ({
-      ...prev,
-      sosAlerts: sosHistory
-    }))
+    
+    setLoading(true)
+    try {
+      const res = await API.post('/sos/')
+      toast.success(res.data.message || 'SOS alert recorded and emergency contacts notified!')
+      
+      // Refresh SOS history from API
+      const historyRes = await API.get('/sos/history')
+      setHistoryData(prev => ({ ...prev, sosAlerts: historyRes.data.history || [] }))
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to record SOS alert')
+      console.error('SOS error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,8 +86,12 @@ export default function History() {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">SOS Alert History</h2>
-            <button onClick={recordSOS} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-bold flex items-center gap-2">
-              <FaPlus /> Test Alert
+            <button 
+              onClick={recordSOS} 
+              disabled={loading}
+              className="bg-red-500 hover:bg-red-600 disabled:bg-red-400 text-white px-4 py-2 rounded font-bold flex items-center gap-2"
+            >
+              <FaPlus /> {loading ? 'Sending...' : 'Test Alert'}
             </button>
           </div>
           {historyData.sosAlerts.length > 0 ? (

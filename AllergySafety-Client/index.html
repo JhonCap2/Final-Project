@@ -13,25 +13,31 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Facebook SDK -->
-    <script>
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId: '%VITE_FACEBOOK_APP_ID%',
-                cookie: true,
-                xfbml: true,
-                version: 'v18.0'
-            });
-        };
+    <!-- Facebook SDK (module); only initialize if VITE_FACEBOOK_APP_ID is set -->
+    <script type="module">
+        const FB_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID || '';
+        if (FB_APP_ID) {
+            window.fbAsyncInit = function() {
+                FB.init({
+                    appId: FB_APP_ID,
+                    cookie: true,
+                    xfbml: true,
+                    version: 'v18.0'
+                });
+            };
 
-        // Load the Facebook SDK asynchronously
-        (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
+            // Load the Facebook SDK asynchronously
+            (function(d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://connect.facebook.net/en_US/sdk.js";
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
+        } else {
+            // No FB app id configured; skip loading SDK
+            console.info('VITE_FACEBOOK_APP_ID not set — skipping Facebook SDK initialization');
+        }
     </script>
 </body>
 </html>
